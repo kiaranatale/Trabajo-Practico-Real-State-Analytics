@@ -12,13 +12,20 @@ La hipótesis general es que en la Ciudad Autónoma de Buenos Aires existen tipo
 Algunas de las preguntas de investigación, desde los distintos niveles de análisis, son las siguientes:
 
 Análisis descriptivo:
+
 * ¿Qué tipologías de propiedades presentan mayor rentabilidad potencial?
+  
 Análisis diagnóstico:
+
 * ¿Qué características de las propiedades impactan en el ingreso por alquiler?
+  
 Análisis predictivo:
+
 * ¿Qué zonas presentan mejor relación entre precio de compra e ingreso estimado?
 * ¿Cuál es el tiempo estimado de recupero de la inversión según el tipo de alquiler?
+  
 Análisis prescriptivo:
+
 * ¿Conviene más la renta tradicional o el alquiler temporal?
 * ¿Según los pronósticos a futuro, hay algun barrio o zona en la que convenga invertir?¿Alguno en el que sea una mala idea hacerlo?
 
