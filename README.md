@@ -31,4 +31,25 @@ Análisis prescriptivo:
 
 Para responder estas preguntas se construirán indicadores clave como ingreso mensual estimado, rentabilidad bruta anual, precio por metro cuadrado, superficie promedio, análisis de amenities y tiempo de recupero de la inversión. Estos indicadores permitirán identificar oportunidades y comparar distintas estrategias de inversión inmobiliaria.
 
-Al mismo tiempo, será necesario integrar bases de datos contextuales.
+Al mismo tiempo, será necesario integrar bases de datos contextuales:
+
+En primer lugar, es necesario mapear la calle y altura de las propiedades para obtener su latitud y longitud, y asi poder cruzar con datos externos que tienen referencias geograficas. Al mismo tiempo identificar a que comuna pertenece cada propiedad, para ello sera necesario el dataset de "Comunas" de la ciudad de buenos aires.Para esto vamos a necesitar Callejero csv, obtenido de buenos aires data, que contiene datos de las calles y su referencia geografica por altura, ademas de a que comuna pertenece la calle en esa altura.
+
+Las bases contextuales para la que nos sera util el dato de la ubicacion geografica:
+
+*Delitos de la ciudad de buenos aires, extrayendo y concatenando las bases de datos disponibles desde 2016 hasta 2024, que tienen detalle de cada robo y hurto cometido por comuna y con detalle de ubicacion geoespacial.
+
+*Mapa de ruido diurno y nocturno ambos datasets extraidos desde buenos aires data con mediciones hechas en 2025. Es un dato relevante porque determina la calidad de vida.
+
+*Espacios verdes publicos: nos permite evaluar cercania con espacios verdes.
+
+*Obras inciadas: nos permite evaluar si alguna zona se está gentrificando y en el futuro valdrá más.
+
+*Lineas de subte: nos permite evaluar la cercania con el medio de transporte, lo que le agrega valor a una propiedad
+
+*Oferta gastronomica: nos permite evaluar la cercania con locales gastronomicos.
+
+*Areas hospitalarias: nos permite evaluar cercania con hospitales.
+
+Estos son solo algunos de los datasets contextuales que nos pueden ser útiles.
+
