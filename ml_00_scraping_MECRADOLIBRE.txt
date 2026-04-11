@@ -1,0 +1,12 @@
+Primero, se ingresa al portal inmobiliario para aplicar los filtros necesarios, seleccionando la ubicación en Capital Federal y la condición de propiedades usadas. 
+Debido a que el sitio cuenta con medidas de seguridad que dificultan el acceso automatizado directo, se utiliza un script de JavaScript que se ejecuta desde la consola del navegador. 
+Este procedimiento permite descargar archivos CSV con los enlaces, títulos y precios iniciales de las publicaciones, los cuales se almacenan en una carpeta de datos crudos.
+Luego, se utiliza un script de Python que consolida todos los archivos descargados y elimina los registros duplicados basándose en el enlace de la publicación. 
+Una vez obtenida la lista única, el código recorre cada enlace de forma individual, aplicando tiempos de espera entre cada petición para evitar bloqueos. 
+Durante esta navegación, el script captura la descripción completa del aviso y la tabla de especificaciones técnicas, obteniendo información detallada que no está disponible en el listado general.
+Con toda la información recolectada, se ejecuta un proceso de limpieza y minería de datos mediante expresiones regulares (RegEx). 
+Este análisis permite escanear las descripciones largas para extraer datos que a veces no están estructurados, como la cantidad de dormitorios, baños y la presencia de servicios adicionales 
+como cochera, balcón o terraza. También se identifican términos específicos como "a refaccionar", "reciclar" o "estado original" para clasificar automáticamente las propiedades que representan una oportunidad de inversión para remodelación y reventa.
+En la etapa final, el proceso se encarga de normalizar los valores numéricos y corregir los errores de formato en los precios. El script transforma las cadenas de texto en números 
+enteros reales, asegurando que los valores de mercado sean precisos y eliminando artefactos visuales como decimales innecesarios. Con los precios y las superficies ya normalizados, se calcula el precio por metro cuadrado para cada propiedad. 
+El resultado de este flujo de trabajo es un dataset final consolidado, limpio y con indicadores clave, listo para ser utilizado en el análisis estadístico del proyecto.

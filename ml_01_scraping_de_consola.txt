@@ -1,0 +1,35 @@
+let casas = [];
+// Buscamos en los dos tipos de contenedores posibles
+document.querySelectorAll('li.ui-search-layout__item, .ui-search-result__wrapper').forEach(item => {
+    // Precio (esta funcionaba bien)
+    let precio = item.querySelector('.andes-money-amount__fraction')?.innerText || "N/A";
+    
+    // Título (buscamos por etiqueta h2 o por clase nueva)
+    let titulo = item.querySelector('h2, .poly-component__title')?.innerText || "N/A";
+    
+    // Ubicación (clase vieja o clase nueva)
+    let loc = item.querySelector('.ui-search-item__location, .poly-component__location')?.innerText || "N/A";
+    
+    // Link (el primer enlace que encuentre)
+    let link = item.querySelector('a')?.href || "N/A";
+    
+    // Atributos (m2, ambientes, etc)
+    let attrs = Array.from(item.querySelectorAll('.ui-search-card-attributes__attribute, .poly-attributes-list__item')).map(a => a.innerText).join(' | ');
+
+    casas.push({ Precio: precio, Ubicacion: loc, Titulo: titulo, Atributos: attrs, Link: link });
+});
+
+console.table(casas);
+
+// Generar CSV con soporte para tildes (UTF-8)
+let csvContent = "\uFEFFPrecio;Ubicacion;Titulo;Atributos;Link\n" 
+    + casas.map(c => `"${c.Precio}";"${c.Ubicacion}";"${c.Titulo}";"${c.Atributos}";"${c.Link}"`).join("\n");
+
+let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+let url = URL.createObjectURL(blob);
+let downloadLink = document.createElement("a");
+downloadLink.setAttribute("href", url);
+downloadLink.setAttribute("download", "datos_mercadolibre.csv");
+document.body.appendChild(downloadLink);
+downloadLink.click();
+document.body.removeChild(downloadLink);
