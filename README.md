@@ -7,10 +7,13 @@ Se consiguieron las bases de datos de Argenprop (mediante el scrapper otorgado p
 *Seleccion del perfil*
 El perfil seleccionado corresponde a un Fondo de Inversión Inmobiliaria interesado en evaluar oportunidades de compra para posterior renta. Este perfil busca maximizar el retorno de inversión comparando diferentes estrategias de explotación inmobiliaria.
 
-Alcance del Proyecto
+# Alcance del Proyecto
 Geográfico: Ciudad Autónoma de Buenos Aires (CABA), análisis desagregado por comuna y barrio.
+
 Temporal: Datos de publicaciones activas al momento del scraping (2025). Datos históricos de delitos 2016–2024.
+
 Tipologías: Departamentos (monoambiente, 2, 3 y 4+ ambientes). Se excluyen casas, PH y locales comerciales en el análisis principal.
+
 Estrategias de renta: Alquiler tradicional (largo plazo) y alquiler temporal (corto plazo / turístico).
 
 # Hipotesis 
