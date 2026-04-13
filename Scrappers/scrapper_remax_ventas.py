@@ -3,8 +3,6 @@ REMAX Argentina - Scraper optimizado
 ======================================
 - Async/concurrent con aiohttp + asyncio
 - Reintentos automáticos con backoff exponencial
-- Manejo especial de HTTP 202 (servidor procesando)
-- Calentamiento de sesión con cookies reales
 - Recorre todas las páginas del listado (page=0, page=1, ...)
 - Entra a cada publicación individual para extraer todos los campos
 - Extrae campos desde el HTML estático (no necesita JS/Selenium)
@@ -19,7 +17,8 @@ USO:
     python remax_scraper.py                              # todas las páginas
     python remax_scraper.py --page-start 0 --page-end 9 # páginas 0 a 9 inclusive
     python remax_scraper.py --page-start 10              # desde página 10 hasta el final
-    python remax_scraper.py --delay 2.0                  # ajustar delay entre requests
+    python remax_scraper.py --max-pages 5                # solo las primeras 5 páginas
+    python remax_scraper.py --delay 0.5                  # ajustar delay entre requests
 
 NOTA: Cada ejecución agrega filas al CSV existente sin borrar lo anterior.
       Si el archivo no existe, lo crea con el encabezado.
@@ -35,24 +34,25 @@ import logging
 import argparse
 import unicodedata
 from bs4 import BeautifulSoup
+from yarl import URL
 
 # ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
 
-MAX_CONCURRENT_PAGES   = 1    # Muy conservador para evitar detección
-MAX_CONCURRENT_DETAILS = 3    # Idem
-DELAY_BETWEEN_REQUESTS = 2.0  # Delay generoso entre requests
-MAX_RETRIES            = 10   # Más reintentos porque 202 es espera, no fallo
-TIMEOUT_SECONDS        = 45   # Timeout amplio
-OUTPUT_FILE            = "remax_datos_alquileres.csv"
-CALLEJERO_FILE         = "callejero.csv"
+MAX_CONCURRENT_PAGES   = 4    # Páginas del listado procesadas en paralelo
+MAX_CONCURRENT_DETAILS = 12   # Detalles de publicaciones en paralelo
+DELAY_BETWEEN_REQUESTS = 0.5  # Segundos de pausa entre requests (por worker)
+MAX_RETRIES            = 4    # Reintentos ante error/timeout
+TIMEOUT_SECONDS        = 20   # Timeout por request
+OUTPUT_FILE            = "remax_datos.csv"
+CALLEJERO_FILE         = "callejero.csv"  # CSV con nombres oficiales de calles
 
-BASE_URL    = "https://www.remax.com.ar"
+BASE_URL   = "https://www.remax.com.ar"
 LISTING_URL = (
-    BASE_URL + "/listings/rent"
+    BASE_URL + "/listings/buy"
     "?page={page}"
     "&pageSize=24"
     "&sort=-createdAt"
-    "&in:operationId=2"
+    "&in:operationId=1"
     "&in:eStageId=0,1,2,3,4"
     "&locations=in:CF@%3Cb%3ECapital%3C%2Fb%3E%20%3Cb%3EFed%3C%2Fb%3Eeral::::::"
     "&landingPath="
@@ -113,15 +113,18 @@ def clean(text) -> str:
 # ─── CALLEJERO ────────────────────────────────────────────────────────────────
 
 def _normalize(text: str) -> str:
+    """Minúsculas, sin tildes, sin puntuación extra."""
     text = text.upper().strip()
     text = unicodedata.normalize("NFD", text)
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    # Quitar prefijos comunes que REMAX suele omitir o agregar
     text = re.sub(r"^(AV\.|AVDA\.|AVENIDA|PJE\.|PASAJE|AUTOPISTA)\s+", "", text)
     text = re.sub(r"[^\w\s]", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
 def _levenshtein(a: str, b: str) -> int:
+    """Distancia de edición entre dos strings."""
     if a == b:
         return 0
     if len(a) < len(b):
@@ -136,6 +139,10 @@ def _levenshtein(a: str, b: str) -> int:
 
 
 def _load_callejero(path: str) -> list[tuple[str, str]]:
+    """
+    Carga el callejero y devuelve lista de (nombre_normalizado, nombre_oficial).
+    Usa 'nomoficial' como nombre canónico.
+    """
     entries = []
     if not os.path.isfile(path):
         log.warning(f"Callejero no encontrado en '{path}'. La calle no será normalizada.")
@@ -153,7 +160,9 @@ def _load_callejero(path: str) -> list[tuple[str, str]]:
     return entries
 
 
+# Se carga una sola vez al iniciar el módulo
 _CALLEJERO: list[tuple[str, str]] = []
+# Índice invertido: primera palabra → candidatos (para acelerar búsqueda)
 _CALLE_INDEX: dict[str, list[tuple[str, str]]] = {}
 
 
@@ -166,30 +175,46 @@ def load_callejero():
 
 
 def match_calle(raw: str) -> str:
+    """
+    Dado el nombre de calle extraído del título, devuelve el nombre oficial
+    del callejero más cercano. Si no hay callejero cargado, devuelve raw.
+    """
     if not _CALLEJERO:
         return raw
+
     query = _normalize(raw)
     if not query:
         return raw
+
+    # 1) Búsqueda exacta primero (más rápida)
     for norm, oficial in _CALLEJERO:
         if norm == query:
             return oficial
+
+    # 2) Buscar candidatos por primera palabra para reducir el espacio
     first_word = query.split()[0] if query.split() else ""
     candidates = _CALLE_INDEX.get(first_word, _CALLEJERO)
+
+    # 3) Distancia de Levenshtein sobre los candidatos
+    # Umbral: toleramos hasta 30% del largo del query o 4 caracteres
     threshold = max(4, int(len(query) * 0.30))
     best_dist = threshold + 1
     best_name = raw
+
     for norm, oficial in candidates:
+        # Optimización: si la diferencia de largo es mayor al umbral, saltar
         if abs(len(norm) - len(query)) > threshold:
             continue
         dist = _levenshtein(query, norm)
         if dist < best_dist:
             best_dist = dist
             best_name = oficial
+
     return best_name
 
 
 def parse_address(raw: str):
+    """Separa 'Calle Altura, Piso X' en sus partes."""
     calle = altura = piso = "N/A"
     raw = raw.strip()
     piso_match = re.search(r"[Pp]iso\s*(\w+)", raw)
@@ -223,80 +248,36 @@ def smart_features(texto: str) -> dict:
         ]) else 0,
     }
 
-
-# ─── FETCH CON REINTENTOS Y MANEJO DE 202 ────────────────────────────────────
+# ─── FETCH CON REINTENTOS ─────────────────────────────────────────────────────
 
 async def fetch(session: aiohttp.ClientSession, url: str, sem: asyncio.Semaphore) -> str | None:
     async with sem:
+        # Usar yarl.URL con encoded=True para que aiohttp no re-encodee los caracteres especiales
+        parsed = URL(url, encoded=True)
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 async with session.get(
-                    url,
-                    headers=HEADERS,
+                    parsed, headers=HEADERS,
                     timeout=aiohttp.ClientTimeout(total=TIMEOUT_SECONDS),
                     allow_redirects=True,
-                    ssl=False,
                 ) as resp:
-
                     if resp.status == 200:
                         await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
                         return await resp.text()
-
-                    elif resp.status == 202:
-                        # El servidor está procesando la respuesta (sistema anti-bot/cola).
-                        # No es un error: hay que esperar y reintentar con paciencia.
-                        wait = 3 + attempt * 2   # 5s, 7s, 9s, 11s... progresivo pero corto
-                        log.info(
-                            f"202 procesando — reintento {attempt}/{MAX_RETRIES} "
-                            f"en {wait}s [{url[-70:]}]"
-                        )
-                        await asyncio.sleep(wait)
-                        continue
-
-                    elif resp.status in (403, 429):
-                        wait = min(2 ** attempt, 60)
+                    if resp.status in (403, 429):
+                        wait = 2 ** attempt
                         log.warning(f"Rate limit ({resp.status}). Esperando {wait}s...")
                         await asyncio.sleep(wait)
-
                     elif resp.status == 404:
-                        log.debug(f"404 — URL no encontrada: {url[-70:]}")
                         return None
-
                     else:
-                        wait = min(2 ** attempt, 30)
-                        log.warning(
-                            f"HTTP {resp.status} — intento {attempt}/{MAX_RETRIES}. "
-                            f"Esperando {wait}s..."
-                        )
-                        await asyncio.sleep(wait)
-
+                        await asyncio.sleep(2 ** attempt)
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                wait = min(2 ** attempt, 30)
-                log.warning(
-                    f"Error de red — intento {attempt}/{MAX_RETRIES} "
-                    f"[{url[-70:]}]: {e}. Reintentando en {wait}s..."
-                )
+                wait = 2 ** attempt
+                log.warning(f"Error intento {attempt}/{MAX_RETRIES} [{url}]: {e}. Reintentando en {wait}s...")
                 await asyncio.sleep(wait)
-
-        log.error(f"Falló definitivamente tras {MAX_RETRIES} intentos: {url[-70:]}")
+        log.error(f"Falló definitivamente: {url}")
         return None
-
-
-# ─── CALENTAMIENTO DE SESIÓN ──────────────────────────────────────────────────
-
-async def warm_session(session: aiohttp.ClientSession, sem: asyncio.Semaphore):
-    """
-    Hace un GET a la home para obtener cookies reales de sesión antes de scrapear.
-    Esto reduce significativamente las respuestas 202 del anti-bot de REMAX.
-    """
-    log.info("Calentando sesión (obteniendo cookies)...")
-    html = await fetch(session, BASE_URL, sem)
-    if html:
-        log.info("Sesión calentada correctamente.")
-    else:
-        log.warning("No se pudo calentar la sesión. Continuando de todas formas...")
-    await asyncio.sleep(3)
-
 
 # ─── PARSEO DEL LISTADO ───────────────────────────────────────────────────────
 
@@ -346,8 +327,8 @@ def get_total_pages(html: str, page_size: int) -> int:
 
     return 1
 
-
 # ─── PARSEO DE PUBLICACIÓN INDIVIDUAL ────────────────────────────────────────
+
 
 BINARY_MAP = {
     "aire acondicionado":                          "Aire_acondicionado_individual",
@@ -413,11 +394,14 @@ def parse_detail(html: str, url: str) -> dict:
     row  = empty_row()
     row["Link"] = url
 
-    full_text  = soup.get_text(separator="\n")
-    lines      = [l.strip() for l in full_text.splitlines() if l.strip()]
+    full_text = soup.get_text(separator="\n")
+    lines     = [l.strip() for l in full_text.splitlines() if l.strip()]
     text_lower = full_text.lower()
 
     # ── Precio y Expensas ─────────────────────────────────────────────────────
+    # Buscamos en líneas individuales para no mezclar valores entre sí.
+    # Precio: línea que matchea EXACTAMENTE "número moneda" (ej: "175.000 USD")
+    # Expensas: línea que contiene la palabra "Expensas"
     for line in lines:
         if row["Precio"] == "N/A":
             m = re.fullmatch(r"([\d.,]+)\s*(USD|ARS|\$)", line.strip())
@@ -429,9 +413,12 @@ def parse_detail(html: str, url: str) -> dict:
                 row["Expensas"] = f"{m.group(1)} {m.group(2) or 'ARS'}"
 
     # ── Dirección ─────────────────────────────────────────────────────────────
+    # El <title> tiene: "Casa en venta 5 ambientes en San Pedro 7100, Barrio, Ciudad"
+    # Hay dos "en": el primero es "en venta", el segundo precede a la dirección.
     page_title = soup.find("title")
     if page_title:
         t = page_title.get_text()
+        # Buscar el SEGUNDO "en " que precede a la dirección
         matches = list(re.finditer(r"\ben\s+", t, re.IGNORECASE))
         if len(matches) >= 2:
             addr_start = matches[-1].end()
@@ -441,7 +428,10 @@ def parse_detail(html: str, url: str) -> dict:
             row["Altura"] = altura
             row["Piso"]   = piso
 
-    # ── Campos KV ─────────────────────────────────────────────────────────────
+    # ── Campos KV estrictos ───────────────────────────────────────────────────
+    # REMAX muestra cada dato en su propia línea con formato exacto:
+    # "superficie total: 800 m²" / "ambientes: 4" / "baños: 2" etc.
+    # Usamos match desde el inicio de línea (^) para evitar capturar basura.
     KV_PATTERNS = [
         (re.compile(r"^superficie total[:\s]+([\d.,]+)"),           "Sup_Total_m2"),
         (re.compile(r"^superficie cubierta[:\s]+([\d.,]+)"),        "Sup_Cubierta_m2"),
@@ -483,11 +473,13 @@ def parse_detail(html: str, url: str) -> dict:
                 break
 
     # ── Amenities binarios ────────────────────────────────────────────────────
+    # Primero buscamos coincidencia exacta de línea (más preciso)
     lines_set = {l.lower().strip() for l in lines}
     for keyword, col in BINARY_MAP.items():
         if col in row and keyword in lines_set:
             row[col] = 1
 
+    # Luego búsqueda substring solo para keywords largos (evita falsos positivos)
     for keyword, col in BINARY_MAP.items():
         if col not in row or row[col] == 1:
             continue
@@ -499,12 +491,10 @@ def parse_detail(html: str, url: str) -> dict:
 
     return row
 
-
 # ─── CSV (modo append) ────────────────────────────────────────────────────────
 
 _csv_file   = None
 _csv_writer = None
-
 
 def init_csv(path: str):
     global _csv_file, _csv_writer
@@ -518,18 +508,15 @@ def init_csv(path: str):
         log.info(f"CSV existente — se agregarán filas en: {os.path.abspath(path)}")
     _csv_file.flush()
 
-
 def save_rows(rows: list[dict]):
     if not rows:
         return
     _csv_writer.writerows(rows)
     _csv_file.flush()
 
-
 def close_csv():
     if _csv_file:
         _csv_file.close()
-
 
 # ─── SCRAPER PRINCIPAL ────────────────────────────────────────────────────────
 
@@ -553,36 +540,31 @@ async def scrape(page_start: int, page_end: int | None, delay: float):
 
     init_csv(OUTPUT_FILE)
 
-    async with aiohttp.ClientSession(
-        connector=connector,
-        cookie_jar=aiohttp.CookieJar(),
-    ) as session:
+    async with aiohttp.ClientSession(connector=connector) as session:
 
-        # ── Calentar sesión para obtener cookies reales ───────────────────────
-        await warm_session(session, sem_pages)
-
-        # ── Cargar página 0 para detectar total ──────────────────────────────
-        log.info("Cargando página 0 para detectar total de páginas...")
+        # ── Cargar página de referencia para detectar el total ────────────────
+        # Siempre cargamos page=0 para saber cuántas páginas hay en total,
+        # pero solo procesamos el rango indicado por el usuario.
+        log.info(f"Cargando página 0 para detectar total de páginas...")
         html_ref = await fetch(session, LISTING_URL.format(page=0), sem_pages)
         if not html_ref:
             log.error("No se pudo cargar la primera página. Abortando.")
             return
 
-        _, page_size = parse_listing_page(html_ref)
-        total_pages  = get_total_pages(html_ref, page_size)
+        _, page_size  = parse_listing_page(html_ref)
+        total_pages   = get_total_pages(html_ref, page_size)
 
+        # Determinar rango efectivo
         start = page_start
         end   = min(page_end, total_pages - 1) if page_end is not None else total_pages - 1
 
         if start > end:
-            log.error(
-                f"Rango inválido: page-start={start} > page-end={end} "
-                f"(total páginas={total_pages})"
-            )
+            log.error(f"Rango inválido: page-start={start} > page-end={end} (total páginas={total_pages})")
             return
 
         log.info(f"Rango a procesar: páginas {start} a {end} ({end - start + 1} páginas)")
 
+        # Si page_start == 0 reutilizamos el html ya descargado
         html0 = html_ref if start == 0 else None
 
         # ── Procesar una página ───────────────────────────────────────────────
@@ -601,10 +583,10 @@ async def scrape(page_start: int, page_end: int | None, delay: float):
                 seen_links.add(l)
 
             if not new_links:
-                log.info(f"Página {page + 1}: sin publicaciones nuevas.")
+                log.info(f"Página {page+1}: sin publicaciones nuevas.")
                 return []
 
-            log.info(f"Página {page + 1}/{total_pages} → {len(new_links)} publicaciones")
+            log.info(f"Página {page+1}/{total_pages} → {len(new_links)} publicaciones")
 
             async def fetch_detail(url: str) -> dict:
                 html_d = await fetch(session, url, sem_details)
@@ -619,7 +601,7 @@ async def scrape(page_start: int, page_end: int | None, delay: float):
         # ── Procesar en batches ───────────────────────────────────────────────
         pages = list(range(start, end + 1))
         for i in range(0, len(pages), MAX_CONCURRENT_PAGES):
-            batch = pages[i : i + MAX_CONCURRENT_PAGES]
+            batch = pages[i:i + MAX_CONCURRENT_PAGES]
             results = await asyncio.gather(*[process_page(p) for p in batch])
             for rows in results:
                 buffer.extend(rows)
@@ -631,7 +613,6 @@ async def scrape(page_start: int, page_end: int | None, delay: float):
     close_csv()
     log.info(f"\n✅ Listo. {total_written:,} propiedades agregadas en: {os.path.abspath(OUTPUT_FILE)}")
 
-
 # ─── ENTRY POINT ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -640,12 +621,11 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos:
-  python remax_scraper.py                               # todas las páginas
-  python remax_scraper.py --page-start 0 --page-end 9  # páginas 0 a 9
-  python remax_scraper.py --page-start 100              # desde página 100 hasta el final
-  python remax_scraper.py --page-start 0 --page-end 49  # primera mitad
-  python remax_scraper.py --page-start 50               # segunda mitad
-  python remax_scraper.py --delay 3.0                   # más lento, menos detección
+  python remax_scraper.py                              # todas las páginas
+  python remax_scraper.py --page-start 0 --page-end 9 # páginas 0 a 9
+  python remax_scraper.py --page-start 100             # desde página 100 hasta el final
+  python remax_scraper.py --page-start 0 --page-end 49 # primera mitad
+  python remax_scraper.py --page-start 50              # segunda mitad
         """,
     )
     parser.add_argument(
@@ -663,7 +643,7 @@ Ejemplos:
     args = parser.parse_args()
 
     asyncio.run(scrape(
-        page_start=args.page_start,
-        page_end=args.page_end,
+        page_start=42,
+        page_end=45,
         delay=args.delay,
     ))
