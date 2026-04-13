@@ -13,7 +13,7 @@ Algunas de las preguntas de investigación, desde los distintos niveles de anál
 
 Análisis descriptivo:
 
-* ¿Qué tipologías de propiedades presentan mayor rentabilidad potencial?
+* ¿Qué tipos de propiedades presentan mayor rentabilidad potencial?
   
 Análisis diagnóstico:
 
