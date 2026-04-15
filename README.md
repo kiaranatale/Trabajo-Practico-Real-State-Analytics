@@ -2,7 +2,7 @@
 Realizado por: Kiara Natale, Gonzalo Haro y Justo Celsi.
 
 *Dataset analizados*:
-Se consiguieron las bases de datos de Argenprop (mediante el scrapper otorgado por la catedra con algunas modificaciones para mejorar y acelerar el acceso a los datos), Mercado Libre (mediante un scrapper generado por nosotros para podes unir todas los registros), y Remax (generando 2 scrappers diferentes para compras y alquileres).
+Se consiguieron las bases de datos de Argenprop (mediante el scrapper otorgado por la catedra con algunas modificaciones para mejorar y acelerar el acceso a los datos), Mercado Libre (mediante un scrapper generado por nosotros para poder unir todas los registros), y Remax (generando 2 scrappers diferentes para compras y alquileres).
 
 *Seleccion del perfil*
 El perfil seleccionado corresponde a un Fondo de Inversión Inmobiliaria interesado en evaluar oportunidades de compra para posterior renta. Este perfil busca maximizar el retorno de inversión comparando diferentes estrategias de explotación inmobiliaria.
