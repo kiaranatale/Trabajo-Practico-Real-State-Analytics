@@ -1,6 +1,20 @@
 # Trabajo Práctico: Real Estate Analytics - CABA
 **Hecho por:** Kiara Natale, Gonzalo Haro, Justo Celsi
 
+## 0. Perfil del Cliente
+
+El cliente es un fondo de inversión inmobiliaria con capital propio disponible para desplegar en activos reales dentro de CABA. Su función objetivo es maximizar el retorno sobre el capital invertido a través de ingresos por renta, evaluando dos estrategias de explotación: alquiler tradicional de largo plazo y alquiler temporal turístico.
+
+El perfil condiciona todas las decisiones analíticas del proyecto de las siguientes formas:
+
+- Horizonte de inversión: Mediano-largo plazo (5–10 años). No busca flipping rápido sino flujo de caja sostenido con preservación de capital en dólares.
+- Función objetivo: Maximizar rentabilidad bruta anual y minimizar el payback period, sujeto a un nivel de riesgo aceptable (volatilidad de ingresos, riesgo regulatorio, zona de seguridad).
+- Restricción de financiamiento: Opera con capital propio. Esto implica que el costo de oportunidad relevante no es la tasa hipotecaria sino el rendimiento de activos alternativos comparables en el mercado argentino (bonos en dólares, plazo fijo UVA, etc.).
+
+Escala: El fondo evalúa múltiples propiedades simultáneamente, por lo que necesita criterios replicables y comparables entre activos, no análisis caso por caso.
+
+Este perfil excluye del análisis principal las dimensiones relevantes para un comprador final (calidad de vida, cercanía a colegios, hospitales) y prioriza las variables directamente vinculadas al retorno financiero: precio por m², ingreso por alquiler, payback period y riesgo por zona.
+
 ---
 
 ## 1. Definición del Contexto Económico
@@ -12,7 +26,9 @@ El mercado inmobiliario de Argentina opera bajo restricciones estructurales que 
 #### Dinámica Inflacionaria y Dolarización
 - La persistente inflación Argentina (promedio 2021-2024: ~100% anual) ha generado una **progresiva dolarización de facto** del mercado inmobiliario de compraventa.
 - A diferencia de otros mercados, los precios de publicación y los valores efectivos de cierre presentan **diferencias significativas**, especialmente en CABA.
+- La brecha entre precio de publicación y valor de cierre se estima en 4,91% según el relevamiento de marzo de 2026 elaborado por UCEMA, RE/MAX Argentina y Reporte Inmobiliario, basado exclusivamente en operaciones concretadas. Este valor se aplica como descuento fijo sobre los precios de publicación en todos los cálculos de rentabilidad y payback period.
 - Los inversores evalúan propiedades como **protección de valor** (hedge contra devaluación), no solo como flujo de renta.
+
 
 #### Mercado de Alquiler: Dualidad Regulatoria
 - **Alquiler de largo plazo (tradicional):** Regulado desde 2020 por Ley 27.551 (actualización anual según IPC). Genera retornos **moderados pero estables**.
@@ -53,6 +69,8 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 - **Incluidas:** Departamentos (monoambiente, 2, 3 y 4+ ambientes)
 - **Excluidas:** Casas, PH, locales comerciales (dinámicas de inversión distintas)
 - Justificación: departamentos concentran inversión institucional y tienen mercado de alquiler más líquido
+- Tratamiento del segmento super-premium: Dentro de los departamentos incluidos, las propiedades con precio/m² por encima del umbral que se identificará al observar la distribución empírica en el EDA se clasificarán como segmento "super-premium". Este segmento se excluye de los promedios generales y los KPIs de mercado para evitar distorsión.
+
 
 ### Estrategias de Explotación
 1. **Alquiler tradicional (largo plazo):** Ingresos regulados, predecibles
@@ -167,7 +185,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
   
 - **Ingreso mensual potencial (alquiler temporal):** Precio/noche × ocupación esperada
   - Uso: Comparar con alquiler tradicional
-  - Nota: Ocupación esperada estimada a partir de datos de turismo o ajustada por zona
+  
 
 ### Indicadores de Rentabilidad
 - **Rentabilidad bruta anual:** (Ingreso mensual × 12) / Precio de compra
@@ -196,7 +214,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
   - Uso: Segmentación de riesgo; no como predictor directo
   
 - **Índice de volatilidad de precios:** Coeficiente de variación de precios/m² en los últimos 12 meses (si hay datos)
-  - Uso: Identificar zonas inestables
+  - Uso: Identificar zonas inestables    (probablemente será descartada)
 
 ---
 
@@ -241,14 +259,11 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 - **Obras iniciadas:** Identificar zonas en transformación
 - **Uso:** Análisis descriptivo; predicción cualitativa de zonas emergentes
 - **Limitación:** Datos puede ser incompletos; usar con cautela
+  
+### Variables Excluidas del Análisis Principal
+- **Oferta gastronómica:** Excluida. Presenta múltiple causalidad y es más reflejo del nivel socioeconómico del barrio que causa de valor. Irrelevante para la función objetivo del fondo inversor.
+- **Áreas hospitalarias:** Excluida. Relevante para comprador final buscando calidad de vida, no para un fondo que optimiza rentabilidad. Su inclusión respondería a un perfil de cliente distinto al definido.
 
-#### Oferta Gastronómica (Relevancia: BAJA - EXCLUIR)
-- **Conclusión:** Múltiple causalidad; más efecto de ingresos que predictor independiente
-- **Decisión:** No incluir en modelos principales; opcional en análisis exploratorio
-
-#### Áreas Hospitalarias (Relevancia: BAJA - EXCLUIR)
-- **Conclusión:** Menos relevante que transporte público o espacios verdes
-- **Decisión:** Excluir del análisis principal
 
 ---
 
@@ -266,10 +281,12 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 ### Consolidación
 - **Deduplicación:** Misma propiedad en múltiples portales → mantener único registro
 - **Validación geográfica:** Direcciones mal formateadas → geocodificación con fuzzy matching
-- **Valores atípicos:** Propiedades con precio/m² > 3 desvíos → revisar manualmente
+- **Valores atípicos:** El umbral de separación del segmento super-premium se determina observando la distribución empírica de precio/m² en el EDA, identificando el punto de quiebre natural en la cola derecha de la distribución. No se predefine un criterio fijo. Las propiedades sobre ese umbral no se eliminan sino que se segmentan para análisis separado
 
 ### Integración de Datos Contextuales
 - **Joins geográficos:** Ubicar cada propiedad en comuna; calcular distancias a puntos de interés
 - **Manejo de datos faltantes contextuales:** Si no hay datos delitos en una zona → imputar con promedio comunal
 
+### Fuentes de información
+Reporte Inmobiliario, Abril 2026 - https://www.reporteinmobiliario.com/article5803-precio-real-de-cierre-por-m%C2%B2-%E2%80%93-marzo-2026
 ---
