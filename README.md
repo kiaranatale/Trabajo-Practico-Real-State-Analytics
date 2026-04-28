@@ -1,6 +1,6 @@
 # Trabajo Práctico: Real Estate Analytics - CABA
-
-## 0. Perfil del Cliente
+**Hecho por:** Kiara Natale, Gonzalo Haro, Justo Celsi
+## 1. Perfil del Cliente
 
 El cliente es un fondo de inversión inmobiliaria con capital propio disponible para desplegar en activos reales dentro de CABA. Su función objetivo es maximizar el retorno sobre el capital invertido a través de ingresos por renta, evaluando dos estrategias de explotación: alquiler tradicional de largo plazo y alquiler temporal turístico.
 
@@ -15,7 +15,7 @@ Este perfil excluye del análisis principal las dimensiones relevantes para un c
 
 ---
 
-## 1. Definición del Contexto Económico
+## 2. Definición del Contexto Económico
 
 ### Realidad del Mercado Inmobiliario Argentino
 
@@ -50,7 +50,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 2. Alcance del Proyecto
+## 3. Alcance del Proyecto
 
 ### Delimitación Geográfica
 - **Ciudad Autónoma de Buenos Aires (CABA)**
@@ -75,7 +75,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 3. Preguntas de Investigación por Nivel Analítico
+## 4. Preguntas de Investigación por Nivel Analítico
 
 ### Nivel Descriptivo
 ¿Cuál es la **distribución actual** de precios, rentas y características de las propiedades en CABA?
@@ -110,7 +110,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 4. Hipótesis Reformuladas (Causalidad Explícita)
+## 5. Hipótesis Reformuladas (Causalidad Explícita)
 
 ### H1: Accesibilidad a Transporte Público → Precio de Compra (NO → Rentabilidad)
 **Formulación:** La proximidad a estaciones de subte está **capitalizada en el precio de compra**, pero no genera **rentabilidad diferencial**.
@@ -168,7 +168,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 5. KPIs Definidos
+## 6. KPIs Definidos
 
 ### Indicadores de Precio
 - **Precio por m²:** Precio de publicación / Superficie cubierta
@@ -216,7 +216,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 6. Recolección de Datos
+## 7. Recolección de Datos
 
 ### Bases Inmobiliarias (Obtenidas)
 
@@ -263,7 +263,7 @@ Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra pa
 
 ---
 
-## 7. Desafíos Técnicos y Soluciones
+## 8. Desafíos Técnicos y Soluciones
 
 ### Recolección (Scraping)
 | Desafío | Solución |
