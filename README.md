@@ -1,262 +1,330 @@
 # Trabajo Práctico: Real Estate Analytics - CABA
-**Hecho por:** Kiara Natale, Gonzalo Haro, Justo Celsi
- 
+
+**Grupo:** Kiara Natale, Gonzalo Haro, Justo Celsi  
+**Materia:** Analítica Descriptiva — ITBA  
+
+---
+
+## Índice
+
+1. [Perfil del Cliente](#1-perfil-del-cliente)
+2. [Contexto Económico](#2-contexto-económico)
+3. [Alcance del Proyecto](#3-alcance-del-proyecto)
+4. [Preguntas de Investigación](#4-preguntas-de-investigación)
+5. [Hipótesis y Resultados](#5-hipótesis--resultados)
+6. [KPIs Definidos](#6-kpis-definidos)
+7. [Estructura del Repositorio](#7-estructura-del-repositorio)
+8. [Pipeline Analítico](#8-pipeline-analítico)
+9. [Entrega 2 — Análisis Avanzado](#9-entrega-2--análisis-avanzado)
+10. [Decisiones Metodológicas](#10-decisiones-metodológicas)
+11. [Limitaciones](#11-limitaciones)
+12. [Próximos Pasos](#12-próximos-pasos)
+13. [Fuentes](#13-fuentes)
+
+---
+
 ## 1. Perfil del Cliente
- 
-El cliente es un fondo de inversión inmobiliaria con capital propio disponible para desplegar en activos reales dentro de CABA. Su función objetivo es maximizar el retorno sobre el capital invertido a través de ingresos por renta, evaluando dos estrategias de explotación: alquiler tradicional de largo plazo y alquiler temporal turístico.
- 
-El perfil condiciona todas las decisiones analíticas del proyecto de las siguientes formas:
- 
-- Horizonte de inversión: Mediano-largo plazo (5–10 años). No busca flipping rápido sino flujo de caja sostenido con preservación de capital en dólares.
-- Función objetivo: Maximizar rentabilidad bruta anual y minimizar el payback period, sujeto a un nivel de riesgo aceptable (volatilidad de ingresos, riesgo regulatorio, zona de seguridad).
-- Restricción de financiamiento: Opera con capital propio. Esto implica que el costo de oportunidad relevante no es la tasa hipotecaria sino el rendimiento de activos alternativos comparables en el mercado argentino (bonos en dólares, plazo fijo UVA, etc.).
-- Escala: El fondo evalúa múltiples propiedades simultáneamente, por lo que necesita criterios replicables y comparables entre activos, no análisis caso por caso.
-Este perfil excluye del análisis principal las dimensiones relevantes para un comprador final (calidad de vida, cercanía a colegios, hospitales) y prioriza las variables directamente vinculadas al retorno financiero: precio por m², ingreso por alquiler, payback period y riesgo por zona.
- 
+
+Fondo de inversión inmobiliaria con capital propio disponible para desplegar en activos reales dentro de CABA. Su función objetivo es maximizar el retorno sobre el capital invertido a través de ingresos por renta, evaluando dos estrategias: **alquiler tradicional de largo plazo** y **alquiler temporal turístico**.
+
+- **Horizonte de inversión:** mediano-largo plazo (5–10 años).
+- **Función objetivo:** maximizar rentabilidad bruta anual y minimizar payback period, sujeto a riesgo aceptable.
+- **Restricción de financiamiento:** opera con capital propio. El costo de oportunidad relevante es el rendimiento de bonos soberanos argentinos en USD (~10% anual, rango histórico 2024-2025: 8-12%), no una tasa hipotecaria.
+- **Escala:** el fondo evalúa múltiples propiedades simultáneamente — necesita criterios replicables y comparables entre activos.
+
 ---
- 
-## 2. Definición del Contexto Económico
- 
-### Realidad del Mercado Inmobiliario Argentino
- 
-El mercado inmobiliario de Argentina opera bajo restricciones estructurales que definen fundamentalmente la lógica de inversión:
- 
-#### Dinámica Inflacionaria y Dolarización
-- La persistente inflación Argentina (promedio 2021-2024: ~100% anual) ha generado una **progresiva dolarización de facto** del mercado inmobiliario de compraventa.
-- A diferencia de otros mercados, los precios de publicación y los valores efectivos de cierre presentan **diferencias significativas**, especialmente en CABA.
-- La brecha entre precio de publicación y valor de cierre se estima en **4,91%** según el relevamiento de marzo de 2026 elaborado por UCEMA, RE/MAX Argentina y Reporte Inmobiliario, basado exclusivamente en operaciones concretadas. Este valor se aplica como descuento fijo sobre los precios de publicación en todos los cálculos de rentabilidad y payback period (`Precio ajustado = Precio de publicación × 0.9509`).
-- Los inversores evalúan propiedades como **protección de valor** (hedge contra devaluación), no solo como flujo de renta.
-#### Mercado de Alquiler: Dualidad Regulatoria
-- **Alquiler de largo plazo (tradicional):** Regulado desde 2020 por Ley 27.551 (actualización anual según IPC). Genera retornos **moderados pero estables**.
-- **Alquiler temporal/turístico:** No regulado. Retornos **superiores pero volátiles** (sensible a ciclos turísticos y regulación futura).
-- Esta dualidad **crea oportunidades de arbitraje**: propiedades con características diferentes pueden ser más rentables bajo estrategias distintas.
-#### Crédito Hipotecario Limitado
-- La disponibilidad de crédito hipotecario en Argentina es **extremadamente limitada** (tasas > 40% anual en pesos en 2024-2025).
-- Esto implica que los inversores utilizan **capital propio**, modificando la función objetivo: maximizar retorno absoluto (no relativo al crédito).
-- Consecuencia: la inversión inmobiliaria compete con **activos alternativos** (bonos, dólares), no solo con otras propiedades.
-#### Heterogeneidad Territorial y Relación Precio-Ingresos
-- CABA concentra ingresos ~2-3× superiores al promedio nacional.
-- Esta **varianza intra-territorial** genera comunas con dinámicas de precio completamente distintas.
-- Zonas de ingreso alto → mayor demanda de alquiler temporal. Zonas mixtas → demanda de alquiler tradicional.
-### Problema de Negocio
- 
-Un **fondo de inversión inmobiliaria** busca evaluar oportunidades de compra para posterior explotación vía renta. Su objetivo es **identificar zonas y tipologías donde la relación precio de compra / ingreso por alquiler sea favorable**, comparando estrategias (largo vs. corto plazo) y estimando tiempos de recupero de inversión.
- 
-**Restricción clave:** La decisión se toma sabiendo que el precio inicial (compra) representa principalmente una **protección de valor**, no una apuesta especulativa al crecimiento.
- 
+
+## 2. Contexto Económico
+
+- **Dolarización de facto:** precios de compraventa nominados en USD con una brecha de cierre de **4,91%** respecto al precio de publicación (UCEMA/RE/MAX/Reporte Inmobiliario, marzo 2026). Todos los KPIs usan `Precio_ajustado_USD = Precio_publicación × 0.9509`.
+- **Dualidad regulatoria del alquiler:** largo plazo regulado por Ley 27.551 vs. temporal no regulado (mayor yield, mayor volatilidad).
+- **Crédito hipotecario inaccesible:** el fondo compite con activos financieros en USD, no con financiamiento inmobiliario.
+- **Heterogeneidad territorial:** las 15 comunas de CABA presentan dinámicas de precio y rentabilidad radicalmente distintas.
+
 ---
- 
+
 ## 3. Alcance del Proyecto
- 
-### Delimitación Geográfica
-- **Ciudad Autónoma de Buenos Aires (CABA)**
-- Análisis desagregado por **comuna** (nivel de política urbana)
-- Se reconoce heterogeneidad territorial: dinámicas de inversión distintas según ubicación
-### Delimitación Temporal
-- **Datos de publicaciones activas:** Al momento del scraping (2025)
-- **Datos contextuales agregados:** Delitos acumulados 2017-2024 a nivel comunal, normalizados por población del Censo 2022
-- Limitación: análisis de corte transversal; no es un panel de propiedades
-### Tipologías de Propiedades
-- **Incluidas:** Departamentos (monoambiente, 2, 3 y 4+ ambientes)
-- **Excluidas:** Casas, PH, locales comerciales (dinámicas de inversión distintas)
-- Justificación: departamentos concentran inversión institucional y tienen mercado de alquiler más líquido
-- **Tratamiento del segmento super-premium:** Dentro de los departamentos incluidos, las propiedades con precio/m² por encima del umbral que se identificará al observar la distribución empírica en el EDA se clasificarán como segmento "super-premium". Este segmento se excluye de los promedios generales y los KPIs de mercado para evitar distorsión, pero se analiza como subgrupo separado. El umbral exacto no se predefine arbitrariamente sino que se determina a partir de los datos.
-### Estrategias de Explotación
-1. **Alquiler tradicional (largo plazo):** Ingresos regulados, predecibles
-2. **Alquiler temporal/turístico (corto plazo):** Ingresos superiores pero volátiles
-3. **Objetivo:** Comparar ROI y payback period por estrategia y ubicación
+
+- **Geografía:** Ciudad Autónoma de Buenos Aires (CABA), desagregada por comuna.
+- **Período:** datos de publicaciones activas al momento del scraping (2025). Análisis de corte transversal.
+- **Tipologías:** departamentos (monoambiente, 2, 3 y 4+ ambientes). Excluidas casas, PHs y locales.
+- **Segmento super-premium:** propiedades con `Precio_m2_USD > p99` se excluyen de los promedios y KPIs generales.
+
 ---
- 
-## 4. Preguntas de Investigación por Nivel Analítico
- 
-### Nivel Descriptivo
-¿Cuál es la **distribución actual** de precios, rentas y características de las propiedades en CABA?
- 
-- ¿Qué tipología de departamento (monoambiente, 2, 3, 4+ ambientes) presenta mayor volumen de oferta?
-- ¿Cuál es la distribución de precios por m² según comuna?
-- ¿Cuál es la distribución de rentas de largo plazo según zona?
-### Nivel Diagnóstico
-¿Qué **características de la propiedad y su ubicación** explican variaciones en precios y rentas?
- 
-- ¿Cómo impacta la superficie cubierta en el precio total y en el precio por m²?
-- ¿Cómo impacta la proximidad a transporte público (subte) en el precio de compra y en la rentabilidad bruta?
-- ¿Cómo impacta la presencia de amenities (piscina, gym, seguridad 24h) en el precio y en la demanda de alquiler?
-- ¿Las propiedades a estrenar comandan un precio premium? ¿Ese premium se recupera vía alquiler?
-- ¿Cómo impacta la ubicación en zona de alto delito en el precio de compra y en la capacidad de rentar?
-### Nivel Predictivo
-¿Cuál es el **valor esperado de la renta** y el **retorno estimado** dadas las características de la propiedad?
- 
-- Dado el precio de compra, superficie, ubicación y amenities de una propiedad, ¿cuál es el ingreso mensual esperado por alquiler tradicional?
-- ¿Cuál es el **tiempo estimado de recupero de inversión (payback period)** para una propiedad típica según zona y tipología?
-### Nivel Prescriptivo
-¿Cuál es la **mejor estrategia de inversión** según el perfil del fondo y las oportunidades identificadas?
- 
-- **Decisión estratégica:** ¿Conviene priorizar alquiler de largo plazo (ingresos estables, baja volatilidad) o temporal (ingresos superiores, mayor riesgo)?
-- **Decisión geográfica:** ¿En cuáles comunas la relación precio-renta es más favorable? ¿Dónde es riesgoso invertir?
-- **Decisión tipológica:** ¿Qué tamaño de departamento (monoambiente vs. 2-3 ambientes) maximiza ROI según estrategia?
-- ¿Qué oportunidades de arbitraje existen entre zonas de presencia turística vs. zonas residenciales?
+
+## 4. Preguntas de Investigación
+
+| Nivel | Pregunta |
+|---|---|
+| **Descriptivo** | ¿Cuál es la distribución actual de precios, rentas y características por tipología y comuna? |
+| **Diagnóstico** | ¿Qué características de la propiedad y su ubicación explican variaciones en precios y rentas? |
+| **Predictivo** | ¿Cuál es el ingreso mensual esperado y el payback period según características de la propiedad? |
+| **Prescriptivo** | ¿En qué comunas y tipologías conviene invertir? ¿Qué estrategia de renta maximiza el ROI? |
+
 ---
- 
-## 5. Hipótesis Reformuladas (Causalidad Explícita)
- 
-### H1: Accesibilidad a Transporte Público → Precio de Compra (NO → Rentabilidad)
-**Formulación:** La proximidad a estaciones de subte está **capitalizada en el precio de compra**, pero no genera **rentabilidad diferencial**.
- 
-**Lógica causal:** Una propiedad cerca de subte es más demandada → precio sube. Pero como inversión, el ingreso por alquiler crece proporcionalmente al precio. Resultado: rentabilidad (ingresos/precio) se mantiene similar.
- 
-**Implicación:** Comparar propiedades cercanas vs. lejanas a subte no por rentabilidad, sino por **accesibilidad para el inquilino** (¿afecta demanda? ¿duración del alquiler?).
- 
+
+## 5. Hipótesis & Resultados
+
+| # | Hipótesis | Resultado | Hallazgo clave |
+|---|---|---|---|
+| **H1** | Subte capitalizado en precio, no en rentabilidad | **Refutada** | El subte no discrimina ni precio ni rentabilidad — la red es suficientemente densa para eliminar variabilidad |
+| **H2** | Monoambientes tienen mayor rentabilidad bruta | **Refutada** | Patrón en U invertida: monoamb (6,20%) ≈ 4+A (6,51%) > 3A (6,36%) > 2A (5,71%). Los 2A son la trampa de yield |
+| **H3** | Cercanía a parques eleva el precio/m² | **Refutada (dirección invertida)** | Los parques más grandes están en comunas de menor precio — variable confundida con zonificación socioeconómica |
+| **H4** | Propiedades a estrenar tienen menor rentabilidad | **Validada** | Premium de precio +27%, payback +4,4 años más largo, rentabilidad −137 pb respecto a usados |
+| **H5** | Zonas de mayor delito tienen mayor rentabilidad | **Validada** | El mercado compensa parcialmente: riesgo alto rinde +73 pb sobre bajo; zona media es la peor combinación |
+| **H6** | Alquiler temporal genera mayor ingreso/m² | **Validada con caveats** | Prima del +37% en renta/m² publicada (IC 95%: +3,42 a +6,21 USD/m²/mes). Sin tasa de ocupación efectiva |
+
+> **Advertencia metodológica:** la calidad de la renta estimada (`confianza_renta`) no es uniforme por comuna. Las Comunas 4, 8 y 9 tienen mayoría de rentas con confianza baja por escasez de comparables. Las conclusiones de rentabilidad en esas comunas deben tomarse con cautela.
+
 ---
- 
-### H2: Tamaño de Propiedad → Rentabilidad Diferencial
-**Formulación:** Los departamentos pequeños (monoambientes y 2 ambientes) presentan **mayor rentabilidad bruta anual** que departamentos grandes (3 y 4+ ambientes).
- 
-**Lógica causal:** Propiedades pequeñas tienen menor precio absoluto pero renta casi tan alta → ratio renta/precio es superior.
- 
-**Validación:** Comparar rentabilidad bruta (ingreso anual / precio de compra ajustado) entre tipologías.
- 
----
- 
-### H3: Presencia de Espacios Verdes Próximos → Precio por m²
-**Formulación:** La cercanía a espacios verdes públicos se asocia con **mayor precio por m²**, independientemente de otras características.
- 
-**Lógica causal:** Los espacios verdes son un **atributo exógeno** que mejora calidad de vida → mayor demanda → mayor precio/m².
- 
-**Validación:** Distancia mínima a parque como variable explicativa de precio/m².
- 
----
- 
-### H4: Condición (Estrenar vs. Usado) → Rentabilidad Ajustada
-**Formulación:** Los departamentos a estrenar presentan **menor rentabilidad bruta** y **payback period más largo** que los usados, debido a un premium de precio inicial que no se traslada proporcionalmente a la renta.
- 
-**Lógica causal:** Propiedades nuevas comandan premium de precio que no se refleja en aumento proporcional del alquiler → payback period más largo.
- 
-**Validación:** Comparar precio/m², ingreso estimado y payback period entre nuevos y usados.
- 
----
- 
-### H5: Tasa de Delitos → Precio (Relación Multicausal, Requiere Control)
-**Formulación:** Zonas con menor tasa de delitos presentan **mayor precio por m²**, pero esta relación está **confundida por ingreso del vecindario, infraestructura y disponibilidad de servicios**.
- 
-**Lógica causal:** Ingresos altos → inversión en seguridad → menos delitos → mayor demanda → mayor precio. No es el delito per se sino los factores estructurales detrás.
- 
-**Implicación:** No usar delito como predictor directo. Usar como **variable de segmentación** (riesgo bajo/medio/alto) para evaluar si la renta compensa el riesgo.
- 
----
- 
-### H6: Estrategia de Alquiler → Retorno Diferencial
-**Formulación:** El **alquiler temporal (corto plazo) genera mayor ingreso mensual por m²** que el alquiler tradicional, pero con **mayor volatilidad y riesgo de regulación**.
- 
-**Lógica causal:** Alquiler temporal: precio/noche más elevado por estadías cortas. Alquiler tradicional: precio mensual fijo regulado. La diferencia de ingreso varía según la ubicación turística o residencial de la propiedad.
- 
-**Metodología de validación:** El diferencial de ingresos entre estrategias se estimará comparando los precios de alquiler tradicional con los precios de alquiler temporal publicados en los mismos portales cuando estén disponibles. La comparación se realizará controlando por zona y tipología para aislar el efecto de la estrategia. Se reconoce que esta estimación es aproximada dado que no se cuenta con datos de ocupación efectiva del alquiler temporal.
- 
-**Implicación:** Comparar el diferencial de precio publicado por m² entre estrategias para dimensionar la prima que ofrece el mercado al alquiler temporal sobre el tradicional.
- 
----
- 
+
 ## 6. KPIs Definidos
- 
-### Indicadores de Precio
-- **Precio por m²:** Precio de publicación / Superficie cubierta
-  - Uso: Comparabilidad entre zonas y propiedades
-- **Precio ajustado por m²:** (Precio de publicación × 0.9509) / Superficie cubierta
-  - Uso: Base para todos los cálculos de rentabilidad y payback period; incorpora la brecha de cierre del 4,91% documentada por UCEMA/RE/MAX/Reporte Inmobiliario (marzo 2026)
-- **Precio mediano por comuna:** Agregación para comparativas, calculada sobre el segmento estándar (excluye super-premium)
-  - Uso: Identificar tendencias geográficas
-- **Volatilidad de precio/m² por comuna:** Coeficiente de variación intra-comunal
-  - Uso: Medir homogeneidad del mercado dentro de cada zona; señal de riesgo de valuación
-### Indicadores de Ingreso
-- **Ingreso mensual estimado (alquiler largo plazo):** Mediana de ofertas de alquiler comparables en la zona, extraído de Argenprop, Mercado Libre y Remax mediante una tabla puente por (Comuna, Tipología, banda de superficie)
-  - Uso: Base para cálculo de rentabilidad tradicional y comparación entre estrategias
-- **Ingreso mensual referencial (alquiler temporal):** Precio de publicación de alquiler temporal en portales cuando esté disponible, controlado por zona y tipología
-  - Uso: Estimación del diferencial de ingreso respecto al alquiler tradicional para validar H6
-  - Limitación: No incluye tasa de ocupación efectiva; representa el ingreso potencial publicado, no el ingreso mensual real
-- **Confianza de la renta estimada:** Clasificación alta / media / baja según número de comparables que sustentan cada celda de la tabla puente
-  - Uso: Indicador de robustez de las conclusiones de rentabilidad por zona
-### Indicadores de Rentabilidad
-- **Rentabilidad bruta anual:** (Ingreso mensual × 12) / Precio ajustado
-  - Uso: Comparar propiedades; identificar oportunidades
-- **Rentabilidad neta anual:** (Ingreso mensual × 12 − Gastos anuales) / Precio ajustado
-  - Gastos: impuesto inmobiliario (ABL), mantenimiento (3% anual), un mes de vacancia
-  - Uso: Estimación más realista del rendimiento efectivo
-- **Yield gap vs. bonos:** Rentabilidad bruta anual − Tasa de bono soberano en USD (10%)
-  - Uso: Comparación con el costo de oportunidad relevante para el fondo
-### Indicadores de Recupero
-- **Payback period (años):** Precio ajustado / Ingreso anual estimado
-  - Uso: Tiempo hasta recuperar la inversión sin considerar apreciación del activo
-### Indicadores de Ubicación y Amenidades
-- **Distancia a subte más cercano (km):** Georreferenciación de cada propiedad
-  - Uso: Validar H1 (efecto en precio de compra, no en rentabilidad)
-- **Distancia a parque más cercano (km):** Distancia mínima a parques urbanos relevantes
-  - Uso: Validar H3 (efecto en precio/m²)
-- **Índice de amenities:** Suma de variables binarias de servicios presentes (piscina, gym, seguridad 24h, ascensor, parrilla, etc.)
-  - Uso: Variable de control en modelos; expectativa: mayor amenity → mayor precio, no necesariamente mayor renta
-### Indicadores de Riesgo
-- **Tasa de delitos por comuna:** Delitos acumulados 2017-2024 / Población del Censo 2022
-  - Uso: Construir variable categórica de segmentación de riesgo (bajo / medio / alto) por terciles
-  - Restricción: No se usa como predictor directo de renta (relación multicausal — ver H5)
-### Indicadores de Mercado
-- **Liquidez de oferta por comuna:** Publicaciones de venta activas / Población comunal
-  - Uso: Filtro de escalabilidad — el fondo necesita comunas con suficiente volumen de oferta para desplegar capital
----
- 
-## 7. Recolección de Datos
- 
-### Bases Inmobiliarias (Obtenidas)
- 
-1. **Argenprop:** Scraping con modificaciones sobre el script base de la cátedra
-2. **Mercado Libre:** Scraper propio para consolidación multi-página
-3. **Remax:** Dos scrapers independientes (compras y alquileres)
-**Consolidación:** Base unificada con variables estandarizadas (precio, superficie, ubicación, amenities, tipo de propiedad).
- 
-### Bases Contextuales (Integración Operativa)
- 
-#### Mapeo Geográfico (Crítico)
-- **Callejero CABA (Buenos Aires Data):** Mapea calle + altura → latitud/longitud → comuna
-- **Operación:** Geocodificar cada propiedad (calle + altura) → obtener coordenadas y comuna
-- **Desafío:** Direcciones incompletas o ambiguas; requiere validación y fuzzy matching
-#### Seguridad (Relevancia: Alta)
-- **Delitos CABA 2017-2024 (Buenos Aires Data):** Robos y hurtos por ubicación geoespacial y comuna
-- **Operación:** Construir tasa agregada por comuna (delitos acumulados / población); segmentar en zona de riesgo bajo/medio/alto por terciles
-- **Uso:** Segmentación; NO como predictor directo de renta
-#### Infraestructura de Transporte (Relevancia: Alta)
-- **Líneas de subte (Buenos Aires Data):** Estaciones georreferenciadas
-- **Operación:** Calcular distancia mínima de cada propiedad a estación de subte
-- **Uso:** Validar H1 (efecto en precio, no en rentabilidad)
-#### Espacios Verdes (Relevancia: Media-Alta)
-- **Parques y espacios públicos (Buenos Aires Data):** Polígonos georreferenciados
-- **Operación:** Calcular distancia mínima a parque
-- **Uso:** Validar H3 (efecto en precio/m²)
-#### Población Comunal (Relevancia: Operativa)
-- **Censo 2022 (INDEC):** Población por comuna
-- **Uso:** Normalizar tasa de delitos y liquidez de oferta
-### Variables Excluidas del Análisis Principal
-- **Oferta gastronómica:** Excluida. Presenta múltiple causalidad y es más reflejo del nivel socioeconómico del barrio que causa de valor. Irrelevante para la función objetivo del fondo inversor.
-- **Áreas hospitalarias, cercanía a colegios:** Excluidas. Relevantes para comprador final buscando calidad de vida, no para un fondo que optimiza rentabilidad.
-- **Ruido diurno/nocturno:** Considerado inicialmente pero excluido del análisis. El ruido no es buen predictor independiente de valor: zonas silenciosas pueden ser baratas y zonas ruidosas pueden ser caras según otros factores dominantes.
----
- 
-## 8. Desafíos Técnicos y Soluciones
- 
-### Recolección (Scraping)
-| Desafío | Solución |
-|---------|----------|
-| Paginación dinámica | Scraping asincrónico (aiohttp, Scrapy) |
-| Bloqueos por rate limiting | Control de tiempos de espera; rotación de user-agents |
-| Estructuras HTML heterogéneas | Parsers flexibles; validación de cada fuente |
-| Datos faltantes o inconsistentes | Validación en captura; imputación posterior justificada |
-| Formatos distintos (moneda, superficie) | Estandarización post-scraping |
- 
-### Consolidación
-- **Deduplicación:** Misma propiedad en múltiples portales → mantener único registro con datos más completos
-- **Validación geográfica:** Direcciones mal formateadas → geocodificación con fuzzy matching contra el callejero oficial; fallback por intersección espacial con polígonos de barrios
-- **Valores atípicos:** El umbral de separación del segmento super-premium se determina observando la distribución empírica de precio/m² en el EDA, identificando el punto de quiebre natural en la cola derecha de la distribución. No se predefine un criterio fijo. Las propiedades sobre ese umbral no se eliminan sino que se segmentan para análisis separado.
-### Integración de Datos Contextuales
-- **Joins geográficos:** Ubicar cada propiedad en comuna; calcular distancias a puntos de interés mediante coordenadas
-- **Manejo de datos faltantes contextuales:** Si no hay datos de delitos en una zona → imputar con promedio comunal, documentando las zonas afectadas
-- **Tabla puente para renta estimada:** Cada propiedad en venta hereda la renta mediana de unidades comparables (misma Comuna, misma Tipología, misma banda de superficie) del dataset de alquileres. Se documenta la cantidad de comparables que sustentan cada estimación como indicador de confianza.
 
+| KPI | Fórmula | Uso |
+|---|---|---|
+| `Precio_m2_USD` | Precio_publicación / Sup_cubierta | Comparabilidad entre zonas |
+| `Precio_ajustado_USD` | Precio × 0.9509 | Base para cálculos de retorno |
+| `Rentabilidad_bruta_anual` | (Renta_mensual × 12) / Precio_ajustado | KPI central de yield |
+| `Rentabilidad_neta_anual` | (Renta × 12 − ABL − Mantenimiento − 1 mes vacancia) / Precio_ajustado | Retorno efectivo estimado |
+| `Payback_anios` | Precio_ajustado / Renta_anual | Tiempo de recupero de inversión |
+| `Yield_gap_vs_bonos` | Rentabilidad_bruta − 10% | Diferencial vs. costo de oportunidad del fondo |
+| `Indice_amenities` | Suma de binarios de servicios presentes | Control de calidad del activo |
+| `Tasa_delitos_comuna` | Delitos acumulados 2017-2024 / Población Censo 2022 | Segmentación de riesgo (bajo/medio/alto) |
+| `Liquidez_oferta_comuna` | Publicaciones activas / Población comunal | Escalabilidad del fondo por zona |
+| `confianza_renta` | alta / media / baja según nº de comparables | Robustez de los KPIs de rentabilidad |
 
-### Fuentes
-- Reporte Inmobiliario, abril 2026 — Precio real de cierre por m² marzo 2026: https://www.reporteinmobiliario.com/article5803-precio-real-de-cierre-por-m%C2%B2-%E2%80%93-marzo-2026
+---
+
+## 7. Estructura del Repositorio
+
+```
+Trabajo-Practico-Real-State-Analytics/
+│
+├── Notebooks/
+│   ├── 01_limpieza_ventas.ipynb              # Limpieza y auditoría del dataset de ventas
+│   ├── 01_limpieza_alquileres.ipynb          # Limpieza y auditoría del dataset de alquileres
+│   ├── 02_feature_engineering.ipynb          # Geocodificación, KPIs, variables contextuales
+│   ├── 03_eda_visualizaciones.ipynb          # EDA completo con Plotly — mapas, correlaciones
+│   ├── 04_hipotesis.ipynb                    # Validación formal de H1–H6 (tests estadísticos)
+│   ├── 05_analisis_factorial.ipynb           # Diagnóstico FA → PCA (4 componentes) ★
+│   ├── 06_clustering.ipynb                   # Segmentación K-Means (k=4) + Ward ★
+│   └── 07_modelos_explicativos.ipynb         # OLS + árbol de decisión + Random Forest ★
+│
+├── Datos2/
+│   ├── datos_argenprop_ventas.tsv
+│   ├── datos_argenprop_alquiler.tsv
+│   ├── datos_mercadolibre_ventas.csv
+│   ├── datos_remax_venta.csv
+│   ├── datos_remax_alquiler.csv
+│   ├── dataset_ventas_limpio.csv             # Output nb01
+│   ├── dataset_alquiler_limpio.csv           # Output nb01
+│   ├── dataset_ventas_features.csv           # Output nb02 — ventas con KPIs y features
+│   ├── dataset_alquileres_features.csv       # Output nb02 — alquileres con features
+│   ├── dataset_ventas_pca_scores.csv         # Output nb05 — ventas con 4 componentes PCA ★
+│   ├── dataset_ventas_clusters.csv           # Output nb06 — ventas con segmentos ★
+│   └── importancia_variables.csv             # Output nb07 — importancia RF + coefs OLS ★
+│
+├── Datos Contextuales/
+│   ├── callejero.csv
+│   └── datasets_contextuales.py
+│
+├── Scrappers/
+│
+└── README.md
+```
+
+`★` = nuevo en la Entrega 2
+
+---
+
+## 8. Pipeline Analítico
+
+```
+Scraping (Argenprop · MercadoLibre · Remax)
+        ↓
+01_limpieza  →  dataset_ventas_limpio.csv
+                dataset_alquiler_limpio.csv
+        ↓
+02_feature_engineering  →  Geocodificación (callejero CABA)
+                            Distancias a subte y parques
+                            Tabla puente renta + confianza_renta
+                            KPIs: rentabilidad, payback, yield_gap
+                            dataset_ventas_features.csv
+        ↓
+03_eda_visualizaciones  →  Distribuciones, mapas por comuna,
+                            matriz de correlaciones,
+                            geografía precio vs. rentabilidad
+        ↓
+04_hipotesis  →  Tests formales H1–H6
+                 Reporte de hallazgos estadísticos
+        ↓
+05_analisis_factorial  →  Diagnóstico FA: KMO = 0.42 → FA descartado
+                           PCA sobre 9 variables → 4 componentes (63.9% varianza)
+                           dataset_ventas_pca_scores.csv
+        ↓
+06_clustering  →  K-Means k=4 sobre 4 componentes PCA
+                  Validación Ward — silhouette = 0.29
+                  Perfiles comerciales de segmentos
+                  dataset_ventas_clusters.csv
+        ↓
+07_modelos_explicativos  →  OLS con HC3 (R²aj = 0.327)
+                             Árbol de decisión (caveat: target discretizado)
+                             Random Forest — R² CV = 0.731 ± 0.092
+                             importancia_variables.csv
+```
+
+---
+
+## 9. Entrega 2 — Análisis Avanzado
+
+### 9.1 Reducción de Dimensionalidad (notebook 05)
+
+**Objetivo:** reducir el espacio de 9 variables candidatas e identificar estructura latente antes del clustering.
+
+**Pipeline metodológico:**
+
+**Paso 1 — Diagnóstico FA:**
+Se evaluó primero si el Análisis Factorial era viable. El resultado fue negativo:
+- Bartlett rechaza H₀ (existe alguna correlación) — pero es un umbral mínimo con n grande.
+- **KMO global = 0.42** — por debajo del umbral mínimo de 0.50. 8 de 9 variables tienen KMO individual < 0.50.
+- **Decisión: FA descartado.** El KMO bajo indica que las correlaciones parciales entre variables son tan grandes como las correlaciones simples — cada variable mantiene mayoritariamente su varianza específica, sin compartir varianza con factores latentes comunes. Este resultado *es en sí mismo un hallazgo*: el mercado inmobiliario de CABA opera en dimensiones mayormente independientes, sin constructos latentes claros.
+
+**Paso 2 — PCA como reductor agnóstico:**
+- Estandarización de las 9 variables seleccionadas.
+- **N = 4 componentes** — criterio de Kaiser (autovalor > 1) + codo del scree + umbral ≥ 60% varianza acumulada.
+- **Varianza explicada: 63.9%** (PC1: 21.0%, PC2: 17.8%, PC3: 13.5%, PC4: 11.6%).
+
+**Interpretación de componentes (por loadings):**
+| Componente | Interpretación | Variables dominantes |
+|---|---|---|
+| **PC1 — Valor de mercado** | 21.0% varianza | Precio/m² (+0.890), amenities (+0.538) ↔ rentabilidad (−) |
+| **PC2 — Accesibilidad urbana** | 17.8% varianza | Distancias subte/parque ↔ liquidez |
+| **PC3 — Riesgo contextual** | 13.5% varianza | Volatilidad + delitos ↔ centralidad |
+| **PC4 — Tamaño** | 11.6% varianza | Superficie (loading 0.907) — dimensión ortogonal independiente |
+
+**Nota sobre multicolinealidad:** el VIF calculado sobre las variables originales confirma que la colinealidad es moderada (ninguna supera VIF = 10), consistente con el KMO bajo — el PCA resuelve más curse of dimensionality que multicolinealidad severa.
+
+### 9.2 Segmentación (notebook 06)
+
+**Objetivo:** identificar perfiles de inversión diferenciados sin imponer categorías externas.
+
+**Decisiones metodológicas:**
+- **Input:** 4 componentes PCA del notebook 05 (ortogonales, estandarizados — distancia euclidiana significativa).
+- **K-Means** con 50 inicializaciones, `k-means++`. Validación independiente con clustering jerárquico Ward.
+- **k = 4** — silhouette máximo (0.29) + interpretabilidad comercial. Davies-Bouldin mínimo en k=7 pero la diferencia es marginal (1.039 vs 1.103) y k=7 fragmenta el mercado en segmentos no accionables.
+- **Cohesión:** silhouette = 0.29 y DB = 1.10 indican solapamiento moderado — esperado y consistente con el KMO bajo del nb05. Los clusters capturan tendencias centrales diferenciadas, no segmentos estancos.
+
+**Segmentos identificados:**
+
+| Cluster | N | Precio/m² | Rent. bruta | Payback | Zona riesgo | Barrio top |
+|---|---|---|---|---|---|---|
+| **0** | 546 (17%) | 2.321 USD/m² | 6.38% | 15.7 años | Medio | Flores |
+| **1** | 1.172 (37%) | 2.000 USD/m² | 7.76% | 12.9 años | Alto | Recoleta |
+| **2** | 1.259 (40%) | 3.133 USD/m² | 5.27% | 19.0 años | Bajo | Palermo |
+| **3** | 163 (5%) | 2.483 USD/m² | 5.37% | 18.6 años | Medio | Villa del Parque |
+
+**Hallazgo central — accionabilidad:**
+
+Ningún cluster cumple simultáneamente las dos condiciones de accionabilidad (rentabilidad diferencial + escalabilidad). Este resultado no es un artefacto del análisis sino una conclusión sustantiva sobre el mercado:
+
+- **La rentabilidad bruta mediana del mercado es 6.21%** — muy por debajo del bono soberano USD (~10%). El alquiler tradicional en CABA no compite con el activo financiero de referencia en términos de yield bruto.
+- **Tensión operativa:** el Cluster 1 maximiza rentabilidad (7.76%) pero con liquidez marginal y zona de riesgo alto. El Cluster 2 es el único escalable (liquidez sobre mediana) pero rinde por debajo del mercado (5.27%).
+- **Implicación estratégica:** la inversión inmobiliaria en CABA solo se justifica si se incorporan otros componentes de retorno — apreciación del capital, reducción de volatilidad de portafolio, o reconversión a alquiler temporal (H6 validó una prima de ~37% sobre el alquiler tradicional).
+
+**Conexión con hipótesis validadas:** el diferencial entre Cluster 1 y Cluster 2 (+155 bps) confirma H5 (compensación de riesgo). La ausencia de un cluster subte-céntrico es consistente con H1 refutada.
+
+### 9.3 Modelos Explicativos (notebook 07)
+
+**Objetivo:** cuantificar qué variables explican la rentabilidad bruta anual y con qué magnitud.
+
+**Modelos:**
+
+| Modelo | R² / métrica | Observaciones |
+|---|---|---|
+| OLS (HC3 robusto) | R²aj = 0.327 | Supuestos violados (heterocedasticidad, no normalidad) — IC válidos con HC3 |
+| Árbol de decisión | R² CV = 0.92 | **Caveat:** R² inflado por discretización del target (tabla puente de renta) |
+| Random Forest | R² CV = 0.731 ± 0.092 | Modelo más robusto; importancia por permutación confiable |
+
+> **Caveat metodológico — árbol de decisión:** el R² CV del árbol (0.92) no refleja capacidad predictiva real. `Rentabilidad_bruta_anual` se calcula como `Renta_estimada × 12 / Precio_ajustado`, donde la renta proviene de la tabla puente del nb02 — todas las propiedades en la misma celda `(Comuna, Tipología, banda_sup)` reciben la misma renta mediana. Esto reduce drásticamente los valores únicos del target y permite que el árbol "memorice" los clusters de renta sin aprender relaciones reales. El Random Forest con `min_samples_leaf=10` es más robusto ante este efecto.
+
+**Variables con mayor poder explicativo** (importancia por permutación, Random Forest):
+
+| Variable | Importancia perm. | Coef. OLS (std) | p-valor | Interpretación |
+|---|---|---|---|---|
+| `Precio_m2_USD` | 0.428 | −0.034 | < 0.001 | Efecto negativo no lineal: yield cae de ~21% a ~4.5% entre 500 y 5.500 USD/m² |
+| `Sup_Cubierta_m2` | 0.395 | −0.011 | < 0.001 | La renta no escala con la superficie; yield colapsa por debajo de 60-80 m² |
+| `Tipologia_monoamb` | 0.068 | +0.008 | < 0.001 | Monoambientes suman yield marginalmente — refuerza patrón en U de H2 |
+| `Indice_amenities` | 0.024 | +0.005 | < 0.001 | Efecto dispar: positivo en OLS, marginalmente negativo en PDP del RF |
+| `Liquidez_oferta_comuna` | 0.012 | +0.009 | < 0.001 | Positivo en OLS — comunas más activas tienen más comparables |
+
+**Umbral accionable:** propiedades por debajo de ~2.000 USD/m² y menos de 60 m² tienen rentabilidad predicha por encima de la mediana del mercado (6.21%).
+
+---
+
+## 10. Decisiones Metodológicas
+
+### Taxonomía de variables del dataset
+
+Para el modelado de la Entrega 2 se clasificaron todas las variables según su origen:
+
+| Categoría | Variables | Confiabilidad |
+|---|---|---|
+| **Observadas** | Precio_m2_USD, Sup_Cubierta_m2, Ambientes, Indice_amenities, Distancias, Tasa_delitos, Liquidez | Alta |
+| **Imputadas** | Renta_estimada_mensual_USD (tabla puente), Volatilidad_Precio_m2_comuna (agregado comunal) | Media — confianza_renta documenta calidad |
+| **Derivadas válidas** | Rentabilidad_bruta_anual, Precio_m2_mediano_comuna | Alta si inputs son confiables |
+| **Excluidas de modelos** | Antiguedad (bug), Payback_anios (tautología), Yield_gap (derivada del target), Precio_USD (determinismo algebraico) | No usar |
+
+### Bug de imputación de Antigüedad (identificado en Entrega 1)
+
+El proceso de limpieza identificaba correctamente "a estrenar" en el campo `Estado` pero descartaba la columna antes de propagar la información a `Antiguedad`. La imputación posterior concentró artificialmente >60% de los valores en ~40 años (mediana). **Solución:** se recuperaron 153 propiedades adicionales parseando el patrón `a-estrenar` en el slug de URL de Argenprop. Solo `A_estrenar` (binario reconstruido) se usa en los modelos.
+
+### Tabla puente de renta estimada
+
+Cada propiedad en venta hereda la renta mediana de la celda `(Comuna, Tipología, banda_sup)` del dataset de alquileres. La columna `confianza_renta` clasifica la calidad de cada estimación. Se aplica como filtro en todos los análisis de rentabilidad (`confianza_renta ≠ 'baja'`).
+
+### Filtros estándar del pipeline (aplicados en nb03–nb07)
+
+| Constante | Valor | Razón |
+|---|---|---|
+| `GEO_OK_FILTER` | True | Solo propiedades geocodificadas |
+| `SUPERPREMIUM_QUANTILE` | p99 | Excluye outliers extremos |
+| `CONFIANZA_EXCLUIR` | 'baja' | Excluye rentas con poca base de comparables |
+
+---
+
+## 11. Limitaciones
+
+| Limitación | Impacto | Mitigación |
+|---|---|---|
+| `Antiguedad` no confiable como continua | No usable en modelos | Se usa `A_estrenar` binario (reconstruida) |
+| Datos de corte transversal | Sin análisis de tendencias ni apreciación de capital | Documentado en scope |
+| ~9-10% sin geocodificación | Excluidos de análisis espaciales | Sesgo verificado como leve |
+| Confianza_renta baja en Comunas 4, 8, 9 | Rentabilidades del sur menos confiables | Filtro aplicado; advertencia documentada |
+| Alquiler temporal sin tasa de ocupación | H6 validada solo como prima de precio publicado | Caveat explícito |
+| PCA explica 63.9% de varianza | 36.1% de información no capturada en clusters | Clusters leídos sobre variables originales (medianas), no solo sobre componentes |
+| Target discretizado por tabla puente | R² del árbol inflado artificialmente | Caveat metodológico documentado en nb07; se usa RF como modelo principal |
+| Argenprop TSV vacíos | Menor cobertura en dataset de ventas | Remax y ML cubren el mercado |
+
+---
+
+## 12. Próximos Pasos
+
+- **Dashboard en Microsoft Fabric:** construcción sobre OneLake con Shape Map de comunas (GeoJSON), visualización de segmentos, KPIs filtrados por tipología/estrategia, e importancia de variables del RF.
+- **Enriquecimiento con datos de ocupación Airbnb:** necesario para estimar H6 más allá del precio publicado.
+- **Scraping adicional en Comunas 4, 8 y 9:** para mejorar la confianza de la renta estimada en el sur de CABA.
+
+---
+
+## 13. Fuentes
+
+| Fuente | Uso |
+|---|---|
+| Argenprop (scraping) | Precios de venta y alquiler |
+| MercadoLibre (scraping) | Precios de venta |
+| Remax (scraping) | Precios de venta y alquiler |
+| [Callejero CABA — BA Data](https://data.buenosaires.gob.ar/dataset/calles) | Geocodificación |
+| [Delitos CABA 2017-2024 — BA Data](https://data.buenosaires.gob.ar/dataset/delitos) | Tasa de delitos comunal |
+| [Estaciones de subte — BA Data](https://data.buenosaires.gob.ar/dataset/subte-estaciones) | Distancia a subte |
+| [Espacios verdes — BA Data](https://data.buenosaires.gob.ar/dataset/espacios-verdes) | Distancia a parques |
+| [Censo 2022 — INDEC](https://www.indec.gob.ar/indec/web/Nivel4-Tema-2-41-165) | Normalización de delitos y liquidez |
+| [Reporte Inmobiliario / UCEMA / RE\|MAX (marzo 2026)](https://www.reporteinmobiliario.com) | Factor de ajuste precio de cierre (4,91%) |
