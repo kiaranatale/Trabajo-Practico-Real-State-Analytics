@@ -15,7 +15,7 @@
 6. [KPIs Definidos](#6-kpis-definidos)
 7. [Estructura del Repositorio](#7-estructura-del-repositorio)
 8. [Pipeline Analítico](#8-pipeline-analítico)
-9. [Entrega 2 — Análisis Avanzado](#9-entrega-2--análisis-avanzado)
+9. [Análisis Avanzado](#9-análisis-avanzado)
 10. [Decisiones Metodológicas](#10-decisiones-metodológicas)
 11. [Limitaciones](#11-limitaciones)
 12. [Próximos Pasos](#12-próximos-pasos)
@@ -175,7 +175,7 @@ Scraping (Argenprop · MercadoLibre · Remax)
 
 ---
 
-## 9. Entrega 2 — Análisis Avanzado
+## 9. Análisis Avanzado
 
 ### 9.1 Reducción de Dimensionalidad (notebook 05)
 
@@ -309,7 +309,7 @@ Cada propiedad en venta hereda la renta mediana de la celda `(Comuna, Tipología
 
 ## 12. Próximos Pasos
 
-- **Dashboard en Microsoft Fabric:** construcción sobre OneLake con Shape Map de comunas (GeoJSON), visualización de segmentos, KPIs filtrados por tipología/estrategia, e importancia de variables del RF.
+- **Dashboard en Power BI:** construcción sobre OneLake con Shape Map de comunas (GeoJSON), visualización de segmentos, KPIs filtrados por tipología/estrategia, e importancia de variables del RF.
 - **Enriquecimiento con datos de ocupación Airbnb:** necesario para estimar H6 más allá del precio publicado.
 - **Scraping adicional en Comunas 4, 8 y 9:** para mejorar la confianza de la renta estimada en el sur de CABA.
 
