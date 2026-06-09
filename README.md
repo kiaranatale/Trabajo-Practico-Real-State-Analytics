@@ -18,7 +18,7 @@
 9. [Análisis Avanzado](#9-análisis-avanzado)
 10. [Decisiones Metodológicas](#10-decisiones-metodológicas)
 11. [Limitaciones](#11-limitaciones)
-12. [Próximos Pasos](#12-próximos-pasos)
+12. [Dashboard](#12-dashboard)
 13. [Fuentes](#13-fuentes)
 
 ---
@@ -307,11 +307,9 @@ Cada propiedad en venta hereda la renta mediana de la celda `(Comuna, Tipología
 
 ---
 
-## 12. Próximos Pasos
+## 12. Dashboard
 
-- **Dashboard en Power BI:** construcción sobre OneLake con Shape Map de comunas (GeoJSON), visualización de segmentos, KPIs filtrados por tipología/estrategia, e importancia de variables del RF.
-- **Enriquecimiento con datos de ocupación Airbnb:** necesario para estimar H6 más allá del precio publicado.
-- **Scraping adicional en Comunas 4, 8 y 9:** para mejorar la confianza de la renta estimada en el sur de CABA.
+- **Dashboard en Power BI:** [Link de acceso al Dashboard](https://itba2-my.sharepoint.com/:u:/g/personal/knatale_itba_edu_ar/IQCRc_L9PghXS7VrP_0enN6cAZlE5PiyP73nTH8crCoCkfM?e=TaCqvr)
 
 ---
 
