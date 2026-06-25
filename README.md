@@ -128,27 +128,50 @@ Trabajo-Practico-Real-State-Analytics/
 │   ├── 04_hipotesis.ipynb                    # Validación formal de H1–H6 (tests estadísticos)
 │   ├── 05_analisis_factorial.ipynb           # Diagnóstico FA → PCA (4 componentes)
 │   ├── 06_clustering.ipynb                   # Segmentación K-Means (k=4) + Ward
-│   └── 07_modelos_explicativos.ipynb         # OLS + árbol de decisión + Random Forest
+│   ├── 07_modelos_explicativos.ipynb         # OLS + árbol de decisión + Random Forest
+│   ├── Readme Feature Engineering.md
+│   ├── Readme limpieza.md
+│   └── reporte_hallazgos.md
 │
 ├── Datos2/
-│   ├── datos_argenprop_ventas.tsv
-│   ├── datos_argenprop_alquiler.tsv
-│   ├── datos_mercadolibre_ventas.csv
-│   ├── datos_remax_venta.csv
-│   ├── datos_remax_alquiler.csv
-│   ├── dataset_ventas_limpio.csv             # Output nb01
-│   ├── dataset_alquiler_limpio.csv           # Output nb01
-│   ├── dataset_ventas_features.csv           # Output nb02 — ventas con KPIs y features
-│   ├── dataset_alquileres_features.csv       # Output nb02 — alquileres con features
+│   ├── processed/
+│   │       ├── dataset_ventas_limpio.csv             # Output nb01
+│   │       ├── dataset_alquiler_limpio.csv           # Output nb01
+│   │       ├── dataset_ventas_features.csv           # Output nb02 — ventas con KPIs y features
+│   │       └── dataset_alquileres_features.csv       # Output nb02 — alquileres con features
+│   ├── Dataframes.py
 │   ├── dataset_ventas_pca_scores.csv         # Output nb05 — ventas con 4 componentes PCA
 │   ├── dataset_ventas_clusters.csv           # Output nb06 — ventas con segmentos
 │   └── importancia_variables.csv             # Output nb07 — importancia RF + coefs OLS
 │
 ├── Datos Contextuales/
+│   ├── bla.geojson
 │   ├── callejero.csv
 │   └── datasets_contextuales.py
 │
+├── data_raw/
+│   ├── datos_argenprop_ventas.tsv
+│   ├── datos_argenprop_alquiler.tsv
+│   ├── datos_mercadolibre_ventas.csv
+│   ├── datos_remax_venta.csv
+│   ├── datos_remax_alquiler.csv
+│   ├── ml_crudo_p1.csv
+│   ├── ml_crudo_p2.csv
+│   ├── ml_crudo_p3.csv
+│   ├── ml_crudo_p4.csv
+│   ├── ml_crudo_p5.csv
+│   ├── ml_crudo_p6.csv
+│   └── ml_crudo_p7.csv
+│
 ├── Scrappers/
+│   ├── .keep
+│   ├── scrapper_argenprop_alquiler.py
+│   ├── scrapper_argenprop_venta.py
+│   ├── scrapper_ml_00_consola.txt
+│   ├── scrapper_ml_01.py
+│   ├── scrapper_ml_02.py
+│   ├── scrapper_remax_alquiler.py
+│   └── scrapper_remax_ventas.py
 │
 └── README.md
 ```
