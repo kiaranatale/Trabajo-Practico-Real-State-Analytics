@@ -7,19 +7,39 @@
 
 ## Índice
 
-1. [Perfil del Cliente](#1-perfil-del-cliente)
-2. [Contexto Económico](#2-contexto-económico)
-3. [Alcance del Proyecto](#3-alcance-del-proyecto)
-4. [Preguntas de Investigación](#4-preguntas-de-investigación)
-5. [Hipótesis y Resultados](#5-hipótesis--resultados)
-6. [KPIs Definidos](#6-kpis-definidos)
-7. [Estructura del Repositorio](#7-estructura-del-repositorio)
-8. [Pipeline Analítico](#8-pipeline-analítico)
-9. [Análisis Avanzado](#9-análisis-avanzado)
-10. [Decisiones Metodológicas](#10-decisiones-metodológicas)
-11. [Limitaciones](#11-limitaciones)
-12. [Dashboard](#12-dashboard)
-13. [Fuentes](#13-fuentes)
+1. [Resumen Ejecutivo](#0-resumen-ejecutivo)
+2. [Perfil del Cliente](#1-perfil-del-cliente)
+3. [Contexto Económico](#2-contexto-económico)
+4. [Alcance del Proyecto](#3-alcance-del-proyecto)
+5. [Preguntas de Investigación](#4-preguntas-de-investigación)
+6. [Hipótesis y Resultados](#5-hipótesis--resultados)
+7. [KPIs Definidos](#6-kpis-definidos)
+8. [Estructura del Repositorio](#7-estructura-del-repositorio)
+9. [Pipeline Analítico](#8-pipeline-analítico)
+10. [Análisis Avanzado](#9-análisis-avanzado)
+11. [Decisiones Metodológicas](#10-decisiones-metodológicas)
+12. [Conclusiones y Recomendaciones de Negocio](#11-conclusiones-y-recomendaciones-de-negocio)
+13. [Limitaciones y Líneas Futuras](#12-limitaciones-y-líneas-futuras)
+14. [Reflexión: Hacia la Producción](#13-reflexión-hacia-la-producción)
+15. [Dashboard](#14-dashboard)
+16. [Fuentes](#15-fuentes)
+
+---
+
+## 0. Resumen Ejecutivo
+
+Este proyecto analiza el mercado inmobiliario de la Ciudad Autónoma de Buenos Aires (CABA) para responder una pregunta concreta de negocio: **¿dónde y cómo debería desplegar capital un fondo de inversión inmobiliaria que compite contra el bono soberano argentino en USD (~10% anual)?**
+
+A partir de más de 8.500 publicaciones activas scrapeadas de Argenprop, MercadoLibre y Remax, y enriquecidas con datos de delitos, subte, parques y Censo 2022, construimos un pipeline analítico completo que reduce el universo a **3.140 propiedades con renta estimada confiable** y produce criterios de inversión replicables.
+
+**Hallazgos principales:**
+
+- La **rentabilidad bruta mediana del mercado es 6,21%** — 379 puntos básicos por debajo del bono soberano en USD. El alquiler tradicional en CABA no compite con el activo financiero de referencia sin una estrategia complementaria.
+- Las dos variables que más determinan el yield son el **precio por m²** y la **superficie cubierta**: propiedades por debajo de 2.000 USD/m² y menos de 60 m² tienen rentabilidad predicha consistentemente por encima de la mediana del mercado (modelo Random Forest, R² CV = 0,731).
+- La **prima del alquiler temporal es +37%** sobre el alquiler tradicional (IC 95%: +3,42 a +6,21 USD/m²/mes). En zonas turísticas (comunas 1, 3 y 13), esta reconversión es la única vía que acerca el retorno al bono.
+- Las propiedades **a estrenar tienen un premium de precio del +27%** que no se recupera vía alquiler: su rentabilidad bruta es 137 pb menor que la de propiedades usadas y su payback es 4,4 años más largo.
+
+**Recomendación central:** el fondo debería concentrarse en departamentos usados de superficie pequeña (< 60 m²) en comunas 1, 3 y 13, con precio de adquisición por debajo de 2.000 USD/m², evaluando reconversión a alquiler temporal para cerrar el gap con el bono.
 
 ---
 
@@ -106,9 +126,9 @@ Trabajo-Practico-Real-State-Analytics/
 │   ├── 02_feature_engineering.ipynb          # Geocodificación, KPIs, variables contextuales
 │   ├── 03_eda_visualizaciones.ipynb          # EDA completo con Plotly — mapas, correlaciones
 │   ├── 04_hipotesis.ipynb                    # Validación formal de H1–H6 (tests estadísticos)
-│   ├── 05_analisis_factorial.ipynb           # Diagnóstico FA → PCA (4 componentes) ★
-│   ├── 06_clustering.ipynb                   # Segmentación K-Means (k=4) + Ward ★
-│   └── 07_modelos_explicativos.ipynb         # OLS + árbol de decisión + Random Forest ★
+│   ├── 05_analisis_factorial.ipynb           # Diagnóstico FA → PCA (4 componentes)
+│   ├── 06_clustering.ipynb                   # Segmentación K-Means (k=4) + Ward
+│   └── 07_modelos_explicativos.ipynb         # OLS + árbol de decisión + Random Forest
 │
 ├── Datos2/
 │   ├── datos_argenprop_ventas.tsv
@@ -120,9 +140,9 @@ Trabajo-Practico-Real-State-Analytics/
 │   ├── dataset_alquiler_limpio.csv           # Output nb01
 │   ├── dataset_ventas_features.csv           # Output nb02 — ventas con KPIs y features
 │   ├── dataset_alquileres_features.csv       # Output nb02 — alquileres con features
-│   ├── dataset_ventas_pca_scores.csv         # Output nb05 — ventas con 4 componentes PCA ★
-│   ├── dataset_ventas_clusters.csv           # Output nb06 — ventas con segmentos ★
-│   └── importancia_variables.csv             # Output nb07 — importancia RF + coefs OLS ★
+│   ├── dataset_ventas_pca_scores.csv         # Output nb05 — ventas con 4 componentes PCA
+│   ├── dataset_ventas_clusters.csv           # Output nb06 — ventas con segmentos
+│   └── importancia_variables.csv             # Output nb07 — importancia RF + coefs OLS
 │
 ├── Datos Contextuales/
 │   ├── callejero.csv
@@ -132,8 +152,6 @@ Trabajo-Practico-Real-State-Analytics/
 │
 └── README.md
 ```
-
-`★` = nuevo en la Entrega 2
 
 ---
 
@@ -173,6 +191,16 @@ Scraping (Argenprop · MercadoLibre · Remax)
                              importancia_variables.csv
 ```
 
+### Decisiones de preprocesamiento
+
+El volumen inicial de ~8.500 publicaciones se redujo a 3.140 propiedades analizables a través de tres etapas de filtrado:
+
+**Limpieza estructural:** deduplicación por combinación de precio, superficie y dirección; exclusión de tipologías no residenciales (casas, PHs, locales); imputación de ambientes faltantes por texto de descripción. Se corrigió un bug de propagación del campo `A_estrenar` que afectaba al 60% de los registros de antigüedad — la variable se reconstruyó como binario desde el slug de URL de Argenprop.
+
+**Geocodificación:** el callejero oficial de CABA permitió geolocalizar el 90,6% de las propiedades. El 9,4% restante no pudo asignarse a una comuna con certeza y fue excluido de los análisis espaciales.
+
+**Filtro de confianza de renta:** cada propiedad en venta hereda la renta mediana de su celda `(Comuna, Tipología, banda_sup)` en el dataset de alquileres. Celdas con menos de 3 comparables reciben confianza `baja` y se excluyen de todos los análisis de rentabilidad, para no modelar sobre estimaciones sin respaldo empírico.
+
 ---
 
 ## 9. Análisis Avanzado
@@ -195,14 +223,13 @@ Se evaluó primero si el Análisis Factorial era viable. El resultado fue negati
 - **Varianza explicada: 63.9%** (PC1: 21.0%, PC2: 17.8%, PC3: 13.5%, PC4: 11.6%).
 
 **Interpretación de componentes (por loadings):**
+
 | Componente | Interpretación | Variables dominantes |
 |---|---|---|
 | **PC1 — Valor de mercado** | 21.0% varianza | Precio/m² (+0.890), amenities (+0.538) ↔ rentabilidad (−) |
 | **PC2 — Accesibilidad urbana** | 17.8% varianza | Distancias subte/parque ↔ liquidez |
 | **PC3 — Riesgo contextual** | 13.5% varianza | Volatilidad + delitos ↔ centralidad |
 | **PC4 — Tamaño** | 11.6% varianza | Superficie (loading 0.907) — dimensión ortogonal independiente |
-
-**Nota sobre multicolinealidad:** el VIF calculado sobre las variables originales confirma que la colinealidad es moderada (ninguna supera VIF = 10), consistente con el KMO bajo — el PCA resuelve más curse of dimensionality que multicolinealidad severa.
 
 ### 9.2 Segmentación (notebook 06)
 
@@ -211,8 +238,8 @@ Se evaluó primero si el Análisis Factorial era viable. El resultado fue negati
 **Decisiones metodológicas:**
 - **Input:** 4 componentes PCA del notebook 05 (ortogonales, estandarizados — distancia euclidiana significativa).
 - **K-Means** con 50 inicializaciones, `k-means++`. Validación independiente con clustering jerárquico Ward.
-- **k = 4** — silhouette máximo (0.29) + interpretabilidad comercial. Davies-Bouldin mínimo en k=7 pero la diferencia es marginal (1.039 vs 1.103) y k=7 fragmenta el mercado en segmentos no accionables.
-- **Cohesión:** silhouette = 0.29 y DB = 1.10 indican solapamiento moderado — esperado y consistente con el KMO bajo del nb05. Los clusters capturan tendencias centrales diferenciadas, no segmentos estancos.
+- **k = 4** — silhouette máximo (0.29) + interpretabilidad comercial.
+- **Cohesión:** silhouette = 0.29 y DB = 1.10 indican solapamiento moderado — esperado y consistente con el KMO bajo del nb05.
 
 **Segmentos identificados:**
 
@@ -223,21 +250,11 @@ Se evaluó primero si el Análisis Factorial era viable. El resultado fue negati
 | **2** | 1.259 (40%) | 3.133 USD/m² | 5.27% | 19.0 años | Bajo | Palermo |
 | **3** | 163 (5%) | 2.483 USD/m² | 5.37% | 18.6 años | Medio | Villa del Parque |
 
-**Hallazgo central — accionabilidad:**
-
-Ningún cluster cumple simultáneamente las dos condiciones de accionabilidad (rentabilidad diferencial + escalabilidad). Este resultado no es un artefacto del análisis sino una conclusión sustantiva sobre el mercado:
-
-- **La rentabilidad bruta mediana del mercado es 6.21%** — muy por debajo del bono soberano USD (~10%). El alquiler tradicional en CABA no compite con el activo financiero de referencia en términos de yield bruto.
-- **Tensión operativa:** el Cluster 1 maximiza rentabilidad (7.76%) pero con liquidez marginal y zona de riesgo alto. El Cluster 2 es el único escalable (liquidez sobre mediana) pero rinde por debajo del mercado (5.27%).
-- **Implicación estratégica:** la inversión inmobiliaria en CABA solo se justifica si se incorporan otros componentes de retorno — apreciación del capital, reducción de volatilidad de portafolio, o reconversión a alquiler temporal (H6 validó una prima de ~37% sobre el alquiler tradicional).
-
-**Conexión con hipótesis validadas:** el diferencial entre Cluster 1 y Cluster 2 (+155 bps) confirma H5 (compensación de riesgo). La ausencia de un cluster subte-céntrico es consistente con H1 refutada.
+**Hallazgo central:** ningún cluster cumple simultáneamente rentabilidad diferencial y escalabilidad. El Cluster 1 maximiza yield (7,76%) pero con liquidez marginal. El Cluster 2 es el único escalable pero rinde por debajo del mercado (5,27%). La inversión en CABA implica elegir entre yield y escala.
 
 ### 9.3 Modelos Explicativos (notebook 07)
 
 **Objetivo:** cuantificar qué variables explican la rentabilidad bruta anual y con qué magnitud.
-
-**Modelos:**
 
 | Modelo | R² / métrica | Observaciones |
 |---|---|---|
@@ -245,27 +262,23 @@ Ningún cluster cumple simultáneamente las dos condiciones de accionabilidad (r
 | Árbol de decisión | R² CV = 0.92 | **Caveat:** R² inflado por discretización del target (tabla puente de renta) |
 | Random Forest | R² CV = 0.731 ± 0.092 | Modelo más robusto; importancia por permutación confiable |
 
-> **Caveat metodológico — árbol de decisión:** el R² CV del árbol (0.92) no refleja capacidad predictiva real. `Rentabilidad_bruta_anual` se calcula como `Renta_estimada × 12 / Precio_ajustado`, donde la renta proviene de la tabla puente del nb02 — todas las propiedades en la misma celda `(Comuna, Tipología, banda_sup)` reciben la misma renta mediana. Esto reduce drásticamente los valores únicos del target y permite que el árbol "memorice" los clusters de renta sin aprender relaciones reales. El Random Forest con `min_samples_leaf=10` es más robusto ante este efecto.
-
 **Variables con mayor poder explicativo** (importancia por permutación, Random Forest):
 
-| Variable | Importancia perm. | Coef. OLS (std) | p-valor | Interpretación |
-|---|---|---|---|---|
-| `Precio_m2_USD` | 0.428 | −0.034 | < 0.001 | Efecto negativo no lineal: yield cae de ~21% a ~4.5% entre 500 y 5.500 USD/m² |
-| `Sup_Cubierta_m2` | 0.395 | −0.011 | < 0.001 | La renta no escala con la superficie; yield colapsa por debajo de 60-80 m² |
-| `Tipologia_monoamb` | 0.068 | +0.008 | < 0.001 | Monoambientes suman yield marginalmente — refuerza patrón en U de H2 |
-| `Indice_amenities` | 0.024 | +0.005 | < 0.001 | Efecto dispar: positivo en OLS, marginalmente negativo en PDP del RF |
-| `Liquidez_oferta_comuna` | 0.012 | +0.009 | < 0.001 | Positivo en OLS — comunas más activas tienen más comparables |
+| Variable | Importancia perm. | Interpretación |
+|---|---|---|
+| `Precio_m2_USD` | 0.428 | Yield cae de ~21% a ~4.5% entre 500 y 5.500 USD/m² |
+| `Sup_Cubierta_m2` | 0.395 | La renta no escala con la superficie; yield colapsa por encima de 60-80 m² |
+| `Tipologia_monoamb` | 0.068 | Monoambientes suman yield marginalmente |
+| `Indice_amenities` | 0.024 | Efecto dispar: positivo en OLS, marginalmente negativo en PDP del RF |
+| `Liquidez_oferta_comuna` | 0.012 | Comunas más activas tienen más comparables |
 
-**Umbral accionable:** propiedades por debajo de ~2.000 USD/m² y menos de 60 m² tienen rentabilidad predicha por encima de la mediana del mercado (6.21%).
+**Umbral accionable:** propiedades por debajo de ~2.000 USD/m² y menos de 60 m² tienen rentabilidad predicha consistentemente por encima de la mediana del mercado.
 
 ---
 
 ## 10. Decisiones Metodológicas
 
 ### Taxonomía de variables del dataset
-
-Para el modelado de la Entrega 2 se clasificaron todas las variables según su origen:
 
 | Categoría | Variables | Confiabilidad |
 |---|---|---|
@@ -274,15 +287,7 @@ Para el modelado de la Entrega 2 se clasificaron todas las variables según su o
 | **Derivadas válidas** | Rentabilidad_bruta_anual, Precio_m2_mediano_comuna | Alta si inputs son confiables |
 | **Excluidas de modelos** | Antiguedad (bug), Payback_anios (tautología), Yield_gap (derivada del target), Precio_USD (determinismo algebraico) | No usar |
 
-### Bug de imputación de Antigüedad (identificado en Entrega 1)
-
-El proceso de limpieza identificaba correctamente "a estrenar" en el campo `Estado` pero descartaba la columna antes de propagar la información a `Antiguedad`. La imputación posterior concentró artificialmente >60% de los valores en ~40 años (mediana). **Solución:** se recuperaron 153 propiedades adicionales parseando el patrón `a-estrenar` en el slug de URL de Argenprop. Solo `A_estrenar` (binario reconstruido) se usa en los modelos.
-
-### Tabla puente de renta estimada
-
-Cada propiedad en venta hereda la renta mediana de la celda `(Comuna, Tipología, banda_sup)` del dataset de alquileres. La columna `confianza_renta` clasifica la calidad de cada estimación. Se aplica como filtro en todos los análisis de rentabilidad (`confianza_renta ≠ 'baja'`).
-
-### Filtros estándar del pipeline (aplicados en nb03–nb07)
+### Filtros estándar del pipeline
 
 | Constante | Valor | Razón |
 |---|---|---|
@@ -292,28 +297,102 @@ Cada propiedad en venta hereda la renta mediana de la celda `(Comuna, Tipología
 
 ---
 
-## 11. Limitaciones
+## 11. Conclusiones y Recomendaciones de Negocio
 
-| Limitación | Impacto | Mitigación |
+### Conclusión general
+
+El alquiler tradicional en CABA **no compite con el bono soberano en USD como estrategia de inversión aislada**. Con una rentabilidad bruta mediana de 6,21% frente a un costo de oportunidad de ~10%, el yield gap es de aproximadamente 379 puntos básicos. Este resultado no es consecuencia de un mercado ineficiente sino de una estructura de precios que incorpora expectativas de apreciación del capital — el inversor que solo captura renta pierde contra el activo financiero.
+
+Sin embargo, el análisis revela que existen combinaciones de activo y estrategia que permiten **acortar significativamente ese gap**, e incluso superarlo en escenarios favorables.
+
+### Recomendaciones por orden de impacto
+
+**1. Filtro duro de precio de adquisición: ≤ 2.000 USD/m²**  
+Es la variable con mayor poder predictivo sobre el yield (importancia 0,428 en Random Forest). Por encima de ese umbral, la rentabilidad cae de forma no lineal. Este filtro descarta automáticamente el segmento premium y a estrenar — que son, precisamente, las trampas de yield del mercado.
+
+**2. Priorizar superficie pequeña: < 60 m²**  
+La renta no escala proporcionalmente con la superficie. Los departamentos chicos concentran mejor retorno por peso invertido. Monoambientes y 2 ambientes compactos son el perfil objetivo; los 3 ambientes típicos son la tipología de menor yield relativo (5,71% mediana).
+
+**3. Evitar propiedades a estrenar para renta**  
+El premium de precio (+27%) no se recupera vía alquiler. La rentabilidad bruta de propiedades nuevas es 137 pb menor que la de usadas y el payback se extiende 4,4 años. Para un fondo de renta, lo usado bien comprado domina estructuralmente.
+
+**4. Evaluar reconversión a alquiler temporal en zonas turísticas**  
+La prima del alquiler temporal es +37% sobre el tradicional (IC 95%: +3,42 a +6,21 USD/m²/mes). En comunas 1, 3 y 13, esta estrategia permite acercar el retorno al bono. La condición es que la tasa de ocupación efectiva supere el umbral de break-even, que el análisis de precios publicados no puede garantizar.
+
+**5. Incorporar apreciación de capital como componente de retorno**  
+El análisis de corte transversal no captura apreciación. Para que el retorno total supere el bono, la apreciación anual del activo debe compensar el yield gap (~3,8 pp). Históricamente el real estate en CABA ha mostrado apreciación real en dólares en horizontes largos, pero este componente está fuera del alcance del análisis presente y debe modelarse separadamente.
+
+### Mapa de decisión por perfil
+
+| Perfil de activo | Estrategia recomendada | Yield esperado | Observación |
+|---|---|---|---|
+| Usado < 60 m², < 2.000 USD/m², comunas 1/3/13 | Temporal turístico | ~9% (estimado) | Depende de ocupación efectiva |
+| Usado < 60 m², < 2.000 USD/m², otras comunas | Tradicional largo plazo | ~7-8% | Perfil objetivo del fondo |
+| A estrenar, cualquier zona | No recomendado para renta | ~5% | Premium de precio no recuperable |
+| > 3.000 USD/m² (segmento premium) | No recomendado para renta | ~4-5% | Yield insuficiente |
+
+---
+
+## 12. Limitaciones y Líneas Futuras
+
+### Limitaciones actuales
+
+| Limitación | Impacto | Mitigación aplicada |
 |---|---|---|
 | `Antiguedad` no confiable como continua | No usable en modelos | Se usa `A_estrenar` binario (reconstruida) |
 | Datos de corte transversal | Sin análisis de tendencias ni apreciación de capital | Documentado en scope |
 | ~9-10% sin geocodificación | Excluidos de análisis espaciales | Sesgo verificado como leve |
 | Confianza_renta baja en Comunas 4, 8, 9 | Rentabilidades del sur menos confiables | Filtro aplicado; advertencia documentada |
-| Alquiler temporal sin tasa de ocupación | H6 validada solo como prima de precio publicado | Caveat explícito |
-| PCA explica 63.9% de varianza | 36.1% de información no capturada en clusters | Clusters leídos sobre variables originales (medianas), no solo sobre componentes |
-| Target discretizado por tabla puente | R² del árbol inflado artificialmente | Caveat metodológico documentado en nb07; se usa RF como modelo principal |
-| Argenprop TSV vacíos | Menor cobertura en dataset de ventas | Remax y ML cubren el mercado |
+| Alquiler temporal sin tasa de ocupación | H6 validada solo como prima de precio publicado | Caveat explícito en todos los análisis |
+| PCA explica 63.9% de varianza | 36.1% de información no capturada en clusters | Clusters leídos sobre variables originales |
+| Target discretizado por tabla puente | R² del árbol inflado artificialmente | Se usa RF como modelo principal |
+
+### Líneas futuras de investigación
+
+- **Series de tiempo:** incorporar datos históricos de precios para modelar apreciación del capital y estacionalidad del alquiler temporal.
+- **Tasa de ocupación efectiva:** integrar datos de plataformas de alquiler temporal (AirDNA, datos propios) para modelar el yield real del alquiler turístico, no solo el de lista.
+- **Modelado de riesgo de vacancia:** estimar probabilidad de vacancia por zona y tipología para calcular rentabilidad neta ajustada por riesgo.
+- **Expansión geográfica:** extender el análisis al GBA, donde el precio de entrada es menor y el yield gap respecto al bono puede ser más favorable.
+- **Modelo de valorización:** construir un modelo predictivo de precio/m² para identificar propiedades subvaluadas en zonas de alta liquidez.
 
 ---
 
-## 12. Dashboard
+## 13. Reflexión: Hacia la Producción
 
-- **Dashboard en Power BI:** [Link de acceso al Dashboard](https://itba2-my.sharepoint.com/:u:/g/personal/knatale_itba_edu_ar/IQCRc_L9PghXS7VrP_0enN6cAZlE5PiyP73nTH8crCoCkfM?e=TaCqvr)
+El pipeline analítico actual es reproducible pero manual: requiere ejecutar los notebooks en orden, con los datasets correctos en la carpeta `/Datos2`. Llevarlo a un entorno productivo implicaría tres capas de automatización:
+
+### Capa 1 — Actualización de datos (scraping automatizado)
+
+Los scrapers actuales se ejecutan manualmente desde los notebooks. Para automatizar:
+- **Argenprop / MercadoLibre:** los scripts de `aiohttp` + `BeautifulSoup` pueden empaquetarse como funciones y orquestarse con **Apache Airflow** o **GitHub Actions** con ejecución semanal.
+- **Remax:** requiere **Playwright** (sitio renderizado con JavaScript). Podría correr en un contenedor Docker con Chromium headless, disparado por el mismo orquestador.
+- Los datos crudos se depositarían en un bucket de **S3** o **Google Cloud Storage**, versionados por fecha de scraping.
+
+### Capa 2 — Pipeline de transformación (datos procesados)
+
+El pipeline de limpieza, geocodificación y feature engineering (notebooks 01–02) puede refactorizarse como un módulo Python con funciones puras y ejecutarse con **dbt** (si se usa un warehouse SQL) o como scripts en **Prefect/Airflow**. La tabla puente de renta se recalcularía con cada nueva ingesta.
+
+### Capa 3 — Dashboard actualizado
+
+El dashboard de Power BI consume CSVs estáticos. Para que se actualice automáticamente:
+- **Opción A (sin infraestructura adicional):** conectar Power BI Service a un SharePoint o Google Drive donde el pipeline deposita los CSVs actualizados. Power BI refresca según calendario.
+- **Opción B (más robusta):** migrar las fuentes a una base de datos en la nube (PostgreSQL en RDS, BigQuery, o Snowflake) y conectar Power BI vía conector nativo. El pipeline escribe directamente a la base.
+
+### Consideraciones adicionales
+
+- **Monitoreo de calidad:** agregar checks automáticos de `confianza_renta` por lote para detectar degradación del dataset de alquileres (menos publicaciones → más celdas con confianza baja).
+- **Alertas de mercado:** configurar alertas cuando el yield mediano del mercado cambie más de ±50 pb respecto al período anterior, o cuando el bono soberano USD supere un umbral configurable.
+- **Modelo en producción:** el Random Forest puede servirse como API REST (FastAPI + pickle del modelo) para que el fondo evalúe propiedades individuales en tiempo real antes de una oferta.
 
 ---
 
-## 13. Fuentes
+## 14. Dashboard
+
+- **Dashboard interactivo en Power BI Service:** [Acceso público al Dashboard](https://app.powerbi.com/view?r=eyJrIjoiZjY0ZmRjOTItM2Q3My00YTZmLTlhMDMtY2VjMzdjYTgwNzA5IiwidCI6ImExZjUwYTk3LTIxYzAtNDlhNy1hOWQ0LWYyNDRlYmI0MmRhNyIsImMiOjR9&pageName=4bef21b19b98ae90d7c6)
+
+---
+
+## 15. Fuentes
 
 | Fuente | Uso |
 |---|---|
